@@ -1,0 +1,36 @@
+<idea-plugin>
+  <id>org.ca65</id>
+  <name>6502 Assembly</name>
+  <version>1.0</version>
+  <vendor email="michael.billington@gmail.com" url="http://github.com/mike42">Michael Billington</vendor>
+
+  <description><![CDATA[
+      This plugin provides basic support for 6502 assembly language. It is suitable for projects which use the ca65 assembler to target the WDC 6502, 65816, and related microprocessors.
+    ]]></description>
+
+  <change-notes><![CDATA[
+      Initial Release.
+    ]]>
+  </change-notes>
+
+  <!-- please see https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html for description -->
+  <idea-version since-build="203.0"/>
+
+  <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+       on how to target different products -->
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+      <fileType name="Assembly file" implementationClass="org.ca65.AsmFileType" fieldName="INSTANCE" language="6502 Assembly" extensions="s"/>
+      <lang.parserDefinition language="6502 Assembly"
+                             implementationClass="org.ca65.AsmParserDefinition"/>
+     <lang.syntaxHighlighterFactory language="6502 Assembly"
+                                   implementationClass="org.ca65.AsmSyntaxHighlighterFactory"/>
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+</idea-plugin>

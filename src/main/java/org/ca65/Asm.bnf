@@ -1,0 +1,21 @@
+{
+parserClass="org.ca65.AsmParser"
+
+extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+psiClassPrefix="Asm"
+psiImplClassSuffix="Impl"
+psiPackage="org.ca65.psi"
+psiImplPackage="org.ca65.psi.impl"
+
+elementTypeHolderClass="org.ca65.psi.AsmTypes"
+elementTypeClass="org.ca65.psi.AsmElementType"
+tokenTypeClass="org.ca65.psi.AsmTokenType"
+}
+
+asmFile ::= item_*
+
+private item_ ::= (instruction|foobar|COMMENT|CRLF)
+
+instruction ::= MNEMONIC INT_LITERAL
+foobar ::= (STRING_LITERAL|MNEMONIC|DOT_KEYWORD|IDENTIFIER|LABEL|EQUALS|COMMA|REGISTER|INT_LITERAL|CHAR_LITERAL|LPAREN|RPAREN|OR|LSHIFT|RSHIFT|AND|CONSTEXPR|SHORTLABEL_REF|LOCAL_LABEL_REF|SHORTLABEL|HIBYTE|LOBYTE|BOOLOR|BOOLAND|NOT|DIV|MUL|ADD|SUB|XOR)

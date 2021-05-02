@@ -1,0 +1,73 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.7.2'
+    id "org.jetbrains.grammarkit" version "2021.1.2"
+}
+
+apply plugin: 'org.jetbrains.grammarkit'
+import org.jetbrains.grammarkit.tasks.*
+
+group 'org.ca65'
+version '1.0'
+sourceCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', 'src/main/gen']
+        }
+    }
+}
+
+dependencies {
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+}
+
+// See https://github.com/JetBrains/gradle-intellij-plugin/
+intellij {
+    version '2021.1'
+}
+
+patchPluginXml {
+    changeNotes """Nothing"""
+}
+
+task generateAsmParser(type: GenerateParser) {
+    // source bnf file
+    source = "src/main/java/org/ca65/Asm.bnf"
+
+    // optional, task-specific root for the generated files. Default: none
+    targetRoot = 'src/main/gen'
+
+    // path to a parser file, relative to the targetRoot
+    pathToParser = '/org/ca65/AsmParser.java'
+
+    // path to a directory with generated psi files, relative to the targetRoot
+    pathToPsiRoot = '/org/ca65/psi'
+
+    // if set, plugin will remove a parser output file and psi output directory before generating new ones. Default: false
+    purgeOldFiles = true
+}
+
+task generateAsmLexer(type: GenerateLexer) {
+    // source flex file
+    source = "src/main/java/org/ca65/Asm.flex"
+
+    // target directory for lexer
+    targetDir = "src/main/gen/org/ca65"
+
+    // target classname, target file will be targetDir/targetClass.java
+    targetClass = "AsmLexer"
+
+    // optional, path to the task-specific skeleton file. Default: none
+    // skeleton = '/some/specific/skeleton'
+
+    // if set, plugin will remove a lexer output file before generating new one. Default: false
+    purgeOldFiles = true
+}
+
+// defaultTasks 'clean' generateAsmLexer generateAsmParser
