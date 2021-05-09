@@ -97,13 +97,14 @@ LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
     {COMMA}                    {return COMMA; }
     "("                        { return LPAREN; }
     ")"                        { return RPAREN; }
-    "||"                        { return BOOLOR; }
+    "||"                       { return BOOLOR; }
     "|"                        { return OR; }
     "<<"                       { return LSHIFT; }
     ">>"                       { return RSHIFT; }
-    "&&"                        { return BOOLAND; }
+    "&&"                       { return BOOLAND; }
     "&"                        { return AND; }
     "#"                        { return CONSTEXPR; }
+    "::"                       { return SCOPE_ACCESS; }
     {SHORTLABEL_REF}           { return SHORTLABEL_REF; }
     ":"                        { return SHORTLABEL; }
     ">"                        { return HIBYTE; }
