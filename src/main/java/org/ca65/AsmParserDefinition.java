@@ -18,7 +18,7 @@ import org.ca65.psi.AsmTypes;
 
 public class AsmParserDefinition implements ParserDefinition {
 
-    public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
+    public static final TokenSet WHITE_SPACES = TokenSet.create(AsmTypes.LINE_WS);
     public static final TokenSet COMMENTS = TokenSet.create(AsmTypes.COMMENT);
 
     public static final IFileElementType FILE = new IFileElementType(AsmLanguage.INSTANCE);

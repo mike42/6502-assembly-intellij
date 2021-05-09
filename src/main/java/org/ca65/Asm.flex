@@ -18,7 +18,7 @@ import static org.ca65.psi.AsmTypes.*;
 EOL_WS           = \n | \r | \r\n
 LINE_WS          = [\ \t]
 WHITE_SPACE_CHAR = {EOL_WS} | {LINE_WS}
-WHITE_SPACE      = {WHITE_SPACE_CHAR}+
+//WHITE_SPACE      = {WHITE_SPACE_CHAR}+
 
 INT_LITERAL = ( {DEC_LITERAL}
               | {HEX_LITERAL}
@@ -83,7 +83,8 @@ LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
 %%
 
 <YYINITIAL> {
-    {WHITE_SPACE}+             {return WHITE_SPACE;}
+    {EOL_WS}+                  {return EOL_WS;}
+    {LINE_WS}+                 {return LINE_WS;}
     {END_OF_LINE_COMMENT}      {return COMMENT;}
     {LABEL}                    {return LABEL;}
     {MNEMONIC}                 {return MNEMONIC;}
@@ -95,6 +96,7 @@ LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
     {CHAR_LITERAL}             {return STRING_LITERAL;}
     {EQUALS}                   {return EQUALS; }
     {COMMA}                    {return COMMA; }
+    ":="                       { return COLON_EQUALS; }
     "("                        { return LPAREN; }
     ")"                        { return RPAREN; }
     "||"                       { return BOOLOR; }
