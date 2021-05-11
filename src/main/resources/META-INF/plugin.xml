@@ -27,6 +27,8 @@
                              implementationClass="org.ca65.AsmParserDefinition"/>
      <lang.syntaxHighlighterFactory language="6502 Assembly"
                                    implementationClass="org.ca65.AsmSyntaxHighlighterFactory"/>
+      <lang.psiStructureViewFactory language="6502 Assembly"
+                                    implementationClass="org.ca65.AsmStructureViewFactory"/>
   </extensions>
 
   <actions>
