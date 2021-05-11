@@ -1,4 +1,4 @@
-# 6502 Assembly for IntelliJ
+# 6502 Assembly Plugin for IntelliJ
 
 This IntelliJ plugin provides basic support for 6502 assembly language. It is suitable for projects which use the `ca65` assembler to target the WDC 6502, 65816, and related microprocessors.
 
