@@ -12,13 +12,19 @@ elementTypeHolderClass="org.ca65.psi.AsmTypes"
 elementTypeClass="org.ca65.psi.AsmElementType"
 tokenTypeClass="org.ca65.psi.AsmTokenType"
 psiImplUtilClass="org.ca65.psi.impl.AsmPsiImplUtil"
+implements("marker")="com.intellij.psi.PsiNamedElement"
 }
 
 asmFile ::= item_*
 
 private item_ ::= marker? (dotexpr|assign|macro|llabel)? COMMENT? EOL_WS
 
-marker ::= (LABEL | SHORTLABEL) {methods=[getLabelName getPresentation]}
+marker ::= (LABEL | SHORTLABEL) {
+    mixin="org.ca65.psi.impl.AsmNamedElementImpl"
+//    implements="org.ca65.psi.AsmNamedElement"
+    methods=[getLabelName getPresentation getName setName getNameIdentifier]
+}
+
 dotexpr ::= DOT_KEYWORD expr
 macro ::= IDENTIFIER expr
 llabel ::=  MNEMONIC expr?

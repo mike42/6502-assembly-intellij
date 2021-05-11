@@ -3,6 +3,7 @@ package org.ca65.psi.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiElement;
 import org.ca65.AsmIcons;
 import org.ca65.psi.AsmMarker;
 import org.ca65.psi.AsmTypes;
@@ -14,14 +15,38 @@ public class AsmPsiImplUtil {
     public static String getLabelName(AsmMarker element) {
         ASTNode keyNode = element.getNode().findChildByType(AsmTypes.LABEL);
         if (keyNode != null) {
-            // ??? do we need to deal with colon?
-            return keyNode.getText().replaceAll("\\\\ ", " ");
+            return keyNode.getText().replaceAll("\\\\ ", " ").replaceAll(":$", "").replaceAll("^@", "");
         } else {
             return null;
         }
     }
 
-    public static ItemPresentation getPresentation(final AsmMarker element) {
+    public static String getName(AsmMarker element) {
+        return getLabelName(element);
+    }
+
+    public static PsiElement setName(AsmMarker element, String newName) {
+        System.err.println("NOT IMPLEMENTED: Cannot rename element " + element.getName() + " to " + newName);
+//        ASTNode labelNode = element.getNode().findChildByType(AsmTypes.LABEL);
+//        if (keyNode != null) {
+//            AsmProperty property = AsmElementFactory.createProperty(element.getProject(), newName);
+//            ASTNode newLabelNode = property.getFirstChild().getNode();
+//            element.getNode().replaceChild(labelNode, newLabelNode);
+//        }
+        return element;
+    }
+
+    public static PsiElement getNameIdentifier(AsmMarker element) {
+        ASTNode keyNode = element.getNode().findChildByType(AsmTypes.LABEL);
+        if (keyNode != null) {
+            return keyNode.getPsi();
+        } else {
+            return null;
+        }
+    }
+
+
+    public static ItemPresentation getPresentation(AsmMarker element) {
         return new ItemPresentation() {
             @Nullable
             @Override
