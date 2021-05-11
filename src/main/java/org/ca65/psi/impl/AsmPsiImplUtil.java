@@ -26,7 +26,12 @@ public class AsmPsiImplUtil {
             @Nullable
             @Override
             public String getPresentableText() {
-                return element.getText().replaceAll(":$", "");
+                String rawText = element.getText();
+                if(rawText.startsWith(":")) {
+                    return "(unnamed label)";
+                }
+                return rawText.replaceAll(":$", "").replaceAll("^@", "");
+
             }
 
             @Nullable
@@ -38,7 +43,7 @@ public class AsmPsiImplUtil {
             @Nullable
             @Override
             public Icon getIcon(boolean unused) {
-                return AsmIcons.ASSEMBLY_ICON;
+                return element.getText().startsWith("@") || element.getText().startsWith(":") ? AllIcons.Nodes.Annotationtype : AllIcons.Nodes.Class;
             }
         };
     }
