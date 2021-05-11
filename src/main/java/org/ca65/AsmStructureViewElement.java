@@ -50,9 +50,13 @@ public class AsmStructureViewElement implements StructureViewTreeElement, Sortab
             List<AsmMarker> markers = PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmMarker.class);
             List<TreeElement> treeElements = new ArrayList<>(markers.size());
             for (AsmMarker marker : markers) {
-                // Can we exclude blank lables?
                 AsmMarkerImpl markerImpl = (AsmMarkerImpl) marker;
+                if(markerImpl.getText().startsWith(":")) {
+                    // exclude blank labels
+                    continue;
+                }
                 treeElements.add(new AsmStructureViewElement(markerImpl));
+
             }
             return treeElements.toArray(new TreeElement[0]);
         }
