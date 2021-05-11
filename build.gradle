@@ -36,6 +36,16 @@ patchPluginXml {
     changeNotes """Nothing"""
 }
 
+runIde {
+
+   debugOptions {
+       enabled = true
+       port = 5005
+       server = true
+       suspend = false
+   }
+}
+
 task generateAsmParser(type: GenerateParser) {
     // source bnf file
     source = "src/main/java/org/ca65/Asm.bnf"

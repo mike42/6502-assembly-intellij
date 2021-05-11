@@ -22,13 +22,16 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
-      <fileType name="Assembly file" implementationClass="org.ca65.AsmFileType" fieldName="INSTANCE" language="6502 Assembly" extensions="s"/>
-      <lang.parserDefinition language="6502 Assembly"
-                             implementationClass="org.ca65.AsmParserDefinition"/>
-     <lang.syntaxHighlighterFactory language="6502 Assembly"
+      <fileType name="Assembly file" implementationClass="org.ca65.AsmFileType" fieldName="INSTANCE"
+                language="6502 Assembly" extensions="s"/>
+    <lang.parserDefinition language="6502 Assembly"
+                           implementationClass="org.ca65.AsmParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="6502 Assembly"
                                    implementationClass="org.ca65.AsmSyntaxHighlighterFactory"/>
-      <lang.psiStructureViewFactory language="6502 Assembly"
-                                    implementationClass="org.ca65.AsmStructureViewFactory"/>
+    <lang.psiStructureViewFactory language="6502 Assembly"
+                                  implementationClass="org.ca65.AsmStructureViewFactory"/>
+    <codeInsight.lineMarkerProvider language="6502 Assembly"
+                                    implementationClass="org.ca65.AsmLineMarkerProvider"/>
   </extensions>
 
   <actions>
