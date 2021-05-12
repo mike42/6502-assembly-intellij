@@ -32,6 +32,8 @@
                                   implementationClass="org.ca65.AsmStructureViewFactory"/>
     <codeInsight.lineMarkerProvider language="6502 Assembly"
                                     implementationClass="org.ca65.AsmLineMarkerProvider"/>
+    <gotoSymbolContributor
+            implementation="org.ca65.AsmChooseByNameContributor"/>
   </extensions>
 
   <actions>
