@@ -4,7 +4,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
-import org.ca65.AsmIcons;
+import org.ca65.psi.AsmElementFactory;
+import org.ca65.psi.AsmIdentifierr;
 import org.ca65.psi.AsmMarker;
 import org.ca65.psi.AsmTypes;
 import org.jetbrains.annotations.Nullable;
@@ -27,24 +28,28 @@ public class AsmPsiImplUtil {
 
     public static PsiElement setName(AsmMarker element, String newName) {
         System.err.println("NOT IMPLEMENTED: Cannot rename element " + element.getName() + " to " + newName);
-//        ASTNode labelNode = element.getNode().findChildByType(AsmTypes.LABEL);
-//        if (keyNode != null) {
-//            AsmProperty property = AsmElementFactory.createProperty(element.getProject(), newName);
+        ASTNode labelNode = element.getNode().findChildByType(AsmTypes.LABEL);
+//        if (labelNode != null) {
+//            AsmMarker property = AsmElementFactory.createMarker(element.getProject(), newName);
 //            ASTNode newLabelNode = property.getFirstChild().getNode();
 //            element.getNode().replaceChild(labelNode, newLabelNode);
 //        }
         return element;
     }
 
+    public static PsiElement setName(AsmIdentifierr element, String newName) {
+        System.err.println("NOT IMPLEMENTED: Cannot rename element " + element.getName() + " to " + newName);
+        return element;
+    }
+
     public static PsiElement getNameIdentifier(AsmMarker element) {
-        ASTNode keyNode = element.getNode().findChildByType(AsmTypes.LABEL);
-        if (keyNode != null) {
-            return keyNode.getPsi();
+        ASTNode labelNode = element.getNode().findChildByType(AsmTypes.LABEL);
+        if (labelNode != null) {
+            return labelNode.getPsi();
         } else {
             return null;
         }
     }
-
 
     public static ItemPresentation getPresentation(AsmMarker element) {
         return new ItemPresentation() {
@@ -71,5 +76,23 @@ public class AsmPsiImplUtil {
                 return element.getText().startsWith("@") || element.getText().startsWith(":") ? AllIcons.Nodes.Annotationtype : AllIcons.Nodes.Class;
             }
         };
+    }
+
+//    public static PsiElement getNameIdentifier(AsmIdentifierr element) {
+//        ASTNode labelNode = element.getNode().findChildByType(AsmTypes.IDENTIFIER);
+//        if (labelNode != null) {
+//            return labelNode.getPsi();
+//        } else {
+//            return null;
+//        }
+//    }
+
+    public static String getName(AsmIdentifierr asmIdentifierr) {
+        ASTNode keyNode = asmIdentifierr.getNode().findChildByType(AsmTypes.IDENTIFIER);
+        if (keyNode != null) {
+            return keyNode.getText().replaceAll("\\\\ ", " ");
+        } else {
+            return null;
+        }
     }
 }
