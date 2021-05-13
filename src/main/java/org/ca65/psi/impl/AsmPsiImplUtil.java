@@ -37,11 +37,6 @@ public class AsmPsiImplUtil {
         return element;
     }
 
-    public static PsiElement setName(AsmIdentifierr element, String newName) {
-        System.err.println("NOT IMPLEMENTED: Cannot rename element " + element.getName() + " to " + newName);
-        return element;
-    }
-
     public static PsiElement getNameIdentifier(AsmMarker element) {
         ASTNode labelNode = element.getNode().findChildByType(AsmTypes.LABEL);
         if (labelNode != null) {

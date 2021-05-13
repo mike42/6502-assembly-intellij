@@ -2,7 +2,10 @@ package org.ca65;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,6 +16,22 @@ import org.ca65.psi.impl.AsmPsiImplUtil;
 import java.util.*;
 
 public class AsmUtil {
+    public static PsiNamedElement findDefinition(AsmFile asmFile, String identifier) {
+        if(asmFile == null) {
+            return null;
+        }
+        AsmMarker[] markers = PsiTreeUtil.getChildrenOfType(asmFile, AsmMarker.class);
+        if (markers == null) {
+            return null;
+        }
+        for (AsmMarker marker : markers) {
+            if (identifier.equals(AsmPsiImplUtil.getLabelName(marker))) {
+               return marker;
+            }
+        }
+        return null;
+    }
+
     public static List<AsmMarker> findLabels(Project project, String label) {
         List<AsmMarker> result = new ArrayList<>();
         Collection<VirtualFile> virtualFiles =

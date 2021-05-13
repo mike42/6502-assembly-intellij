@@ -13,7 +13,6 @@ elementTypeClass="org.ca65.psi.AsmElementType"
 tokenTypeClass="org.ca65.psi.AsmTokenType"
 psiImplUtilClass="org.ca65.psi.impl.AsmPsiImplUtil"
 implements("marker")="com.intellij.psi.PsiNamedElement"
-implements("identifierr")="com.intellij.psi.PsiNamedElement"
 }
 
 asmFile ::= item_*
