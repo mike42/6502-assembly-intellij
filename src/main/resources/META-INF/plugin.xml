@@ -34,6 +34,7 @@
                                     implementationClass="org.ca65.AsmLineMarkerProvider"/>
     <gotoSymbolContributor
             implementation="org.ca65.AsmChooseByNameContributor"/>
+    <lang.commenter language="6502 Assembly" implementationClass="org.ca65.AsmCommenter"/>
   </extensions>
 
   <actions>
