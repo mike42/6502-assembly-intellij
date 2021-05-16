@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
+import org.ca65.AsmIcons;
 import org.ca65.psi.AsmElementFactory;
 import org.ca65.psi.AsmIdentifierr;
 import org.ca65.psi.AsmMarker;
@@ -68,7 +69,7 @@ public class AsmPsiImplUtil {
             @Nullable
             @Override
             public Icon getIcon(boolean unused) {
-                return element.getText().startsWith("@") || element.getText().startsWith(":") ? AllIcons.Nodes.Annotationtype : AllIcons.Nodes.Class;
+                return element.getText().startsWith("@") || element.getText().startsWith(":") ? AllIcons.Nodes.Annotationtype : AsmIcons.LABEL;
             }
         };
     }

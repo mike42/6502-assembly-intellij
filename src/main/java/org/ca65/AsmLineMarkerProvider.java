@@ -25,7 +25,7 @@ public class AsmLineMarkerProvider extends RelatedItemLineMarkerProvider {
             return;
         }
         NavigationGutterIconBuilder<PsiElement> builder =
-                NavigationGutterIconBuilder.create(leafElement.getText().startsWith("@") ? AllIcons.Nodes.Annotationtype : AllIcons.Nodes.Class)
+                NavigationGutterIconBuilder.create(leafElement.getText().startsWith("@") ? AllIcons.Nodes.Annotationtype : AsmIcons.LABEL)
                         .setTarget(leafElement)
                         .setTooltipText("Navigate to label");
         result.add(builder.createLineMarkerInfo(element));
