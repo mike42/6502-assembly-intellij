@@ -12,11 +12,22 @@ import org.ca65.psi.AsmExpr;
 import org.ca65.psi.impl.AsmExprImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.*;
 
 import static org.ca65.psi.AsmTypes.*;
 
 public class AsmLineMarkerProvider extends RelatedItemLineMarkerProvider {
+    private static final Set<String> jumpMnemonics = new HashSet<>(Arrays.asList(
+            "jmp",
+            "jsr",
+            "bcc",
+            "bcs",
+            "beq",
+            "bmi",
+            "bne",
+            "bpl",
+            "bvc",
+            "bvs"));
 
     @Override
     protected void collectNavigationMarkers(@NotNull PsiElement element,
@@ -65,7 +76,8 @@ public class AsmLineMarkerProvider extends RelatedItemLineMarkerProvider {
     }
 
     private static boolean isJumpMnemonic(PsiElement mnemonicElement) {
-        // True for mnemonics which mean "jump"
-        return mnemonicElement.getText().compareToIgnoreCase("jmp") == 0 || mnemonicElement.getText().compareToIgnoreCase("jsr") == 0;
+        // True for mnemonics which are jumps or branches
+        String test = mnemonicElement.getText().toLowerCase(Locale.ROOT);
+        return jumpMnemonics.contains(test);
     }
 }
