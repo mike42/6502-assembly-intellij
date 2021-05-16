@@ -2,8 +2,6 @@ package org.ca65;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.FileTypeIndex;
@@ -13,7 +11,10 @@ import org.ca65.psi.AsmFile;
 import org.ca65.psi.AsmMarker;
 import org.ca65.psi.impl.AsmPsiImplUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class AsmUtil {
     public static PsiNamedElement findDefinition(AsmFile asmFile, String identifier) {
