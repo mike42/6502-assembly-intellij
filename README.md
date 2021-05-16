@@ -4,6 +4,15 @@ This IntelliJ plugin provides basic support for 6502 assembly language. It is su
 
 ![6502 Example in IntelliJ](screenshot/6502_intellij_example.png)
 
+## Features
+
+- Syntax highlighting
+- Go to the definition of a label
+- Find usages of a label
+- Refactor/rename a label and its usages
+- Comment/uncomment blocks of code
+- Code folding for scopes and procedures
+
 ## Installation
 
 This plugin is not currently published to the JetBrains Marketplace.

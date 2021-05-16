@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import org.ca65.psi.AsmMarker;
 import org.ca65.psi.AsmTypes;
+import org.ca65.psi.impl.AsmPsiImplUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +38,18 @@ public class AsmFindUsagesProvider implements FindUsagesProvider {
 
     @Override
     public @Nls @NotNull String getType(@NotNull PsiElement element) {
-        return "Nothing";
+        if(element instanceof AsmMarker) {
+            return "label";
+        }
+        return "identifier";
     }
 
     @Override
     public @Nls @NotNull String getDescriptiveName(@NotNull PsiElement element) {
-        return "Nothing";
+        if(element instanceof AsmMarker) {
+            return AsmPsiImplUtil.getName((AsmMarker) element);
+        }
+        return element.getText();
     }
 
     @Override
