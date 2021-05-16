@@ -91,4 +91,13 @@ public class AsmPsiImplUtil {
             return null;
         }
     }
+
+    public static String getName(AsmLocalLabelRrefImpl asmLocalLabelRref) {
+        ASTNode keyNode = asmLocalLabelRref.getNode();
+        if (keyNode != null) {
+            return keyNode.getText().replaceAll("\\\\ ", " ").replaceAll("^@", "");
+        } else {
+            return null;
+        }
+    }
 }
