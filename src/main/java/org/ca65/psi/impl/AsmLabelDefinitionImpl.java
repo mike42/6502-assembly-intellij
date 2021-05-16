@@ -29,5 +29,4 @@ public class AsmLabelDefinitionImpl extends ASTWrapperPsiElement implements AsmL
     public PsiElement setName(@NlsSafe @NotNull String name) throws IncorrectOperationException {
         return AsmPsiImplUtil.setName((AsmMarker) this, name);
     }
-
 }

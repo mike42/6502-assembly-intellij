@@ -28,13 +28,17 @@ public class AsmPsiImplUtil {
     }
 
     public static PsiElement setName(AsmMarker element, String newName) {
-        System.err.println("NOT IMPLEMENTED: Cannot rename element " + element.getName() + " to " + newName);
         ASTNode labelNode = element.getNode().findChildByType(AsmTypes.LABEL);
-//        if (labelNode != null) {
-//            AsmMarker property = AsmElementFactory.createMarker(element.getProject(), newName);
-//            ASTNode newLabelNode = property.getFirstChild().getNode();
-//            element.getNode().replaceChild(labelNode, newLabelNode);
-//        }
+        if (labelNode == null) {
+            return element;
+        }
+        if(element.getText().startsWith("@")) {
+            // identifier name for local labels always shown w/o '@' symbol.
+            newName = "@" + newName;
+        }
+        AsmMarker newMarker = AsmElementFactory.createMarker(element.getProject(), newName);
+        ASTNode newLabelNode = newMarker.getFirstChild().getNode();
+        element.getNode().replaceChild(labelNode, newLabelNode);
         return element;
     }
 
@@ -73,15 +77,6 @@ public class AsmPsiImplUtil {
             }
         };
     }
-
-//    public static PsiElement getNameIdentifier(AsmIdentifierr element) {
-//        ASTNode labelNode = element.getNode().findChildByType(AsmTypes.IDENTIFIER);
-//        if (labelNode != null) {
-//            return labelNode.getPsi();
-//        } else {
-//            return null;
-//        }
-//    }
 
     public static String getName(AsmIdentifierr asmIdentifierr) {
         ASTNode keyNode = asmIdentifierr.getNode().findChildByType(AsmTypes.IDENTIFIER);

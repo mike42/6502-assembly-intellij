@@ -8,10 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.ca65.AsmUtil;
-import org.ca65.psi.AsmFile;
-import org.ca65.psi.AsmIdentifier;
-import org.ca65.psi.AsmIdentifierr;
-import org.ca65.psi.AsmLocalLabelRref;
+import org.ca65.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +30,7 @@ public class AsmLocalLabelRefImpl extends ASTWrapperPsiElement implements AsmLoc
                 // TODO check this is correct, might need to remove @.
                 String name = getName();
                 if(name != null) {
-                    return new TextRange(1, name.length());
+                    return new TextRange(1, name.length() + 1);
                 } else {
                     return TextRange.EMPTY_RANGE;
                 }
@@ -52,7 +49,14 @@ public class AsmLocalLabelRefImpl extends ASTWrapperPsiElement implements AsmLoc
 
             @Override
             public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-                return null;
+                ASTNode identifierNode = parent.getNode().findChildByType(AsmTypes.LOCAL_LABEL_REF);
+                if (identifierNode == null) {
+                    return parent;
+                }
+                AsmLocalLabelRef newIdentifier = AsmElementFactory.createLocalLabelRef(parent.getProject(), newElementName);
+                ASTNode newIdentifierNode = newIdentifier.getFirstChild().getNode();
+                parent.getNode().replaceChild(identifierNode, newIdentifierNode);
+                return parent;
             }
 
             @Override
@@ -62,6 +66,11 @@ public class AsmLocalLabelRefImpl extends ASTWrapperPsiElement implements AsmLoc
 
             @Override
             public boolean isReferenceTo(@NotNull PsiElement element) {
+                if(element instanceof AsmMarkerImpl) {
+                    String myName = getName();
+                    String theirName = ((AsmMarkerImpl) element).getName();
+                    return myName != null && myName.equals(theirName);
+                }
                 return false;
             }
 

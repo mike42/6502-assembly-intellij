@@ -8,9 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.ca65.AsmUtil;
-import org.ca65.psi.AsmFile;
-import org.ca65.psi.AsmIdentifier;
-import org.ca65.psi.AsmIdentifierr;
+import org.ca65.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +47,14 @@ public class AsmIdentifierImpl extends ASTWrapperPsiElement implements AsmIdenti
 
             @Override
             public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-                return null;
+                ASTNode identifierNode = parent.getNode().findChildByType(AsmTypes.IDENTIFIER);
+                if (identifierNode == null) {
+                    return parent;
+                }
+                AsmIdentifier newIdentifier = AsmElementFactory.createIdentifier(parent.getProject(), newElementName);
+                ASTNode newIdentifierNode = newIdentifier.getFirstChild().getNode();
+                parent.getNode().replaceChild(identifierNode, newIdentifierNode);
+                return parent;
             }
 
             @Override
@@ -59,6 +64,11 @@ public class AsmIdentifierImpl extends ASTWrapperPsiElement implements AsmIdenti
 
             @Override
             public boolean isReferenceTo(@NotNull PsiElement element) {
+                if(element instanceof AsmMarkerImpl) {
+                    String myName = getName();
+                    String theirName = ((AsmMarkerImpl) element).getName();
+                    return myName != null && myName.equals(theirName);
+                }
                 return false;
             }
 
