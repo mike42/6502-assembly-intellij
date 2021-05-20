@@ -15,7 +15,7 @@ This IntelliJ plugin provides basic support for 6502 assembly language. It is su
 
 ## Installation
 
-This plugin is not currently published to the JetBrains Marketplace.
+This plugin may be installed via the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/16799-6502-assembly).
 
 ## License
 
