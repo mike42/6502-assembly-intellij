@@ -31,6 +31,6 @@ public class AsmFileType extends LanguageFileType {
 
     @Override
     public Icon getIcon() {
-        return AsmIcons.ASSEMBLY_ICON;
+        return AsmIcons.ASSEMBLY_FILE;
     }
 }

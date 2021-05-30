@@ -38,6 +38,7 @@
     <lang.commenter language="6502 Assembly" implementationClass="org.ca65.AsmCommenter"/>
     <lang.foldingBuilder language="6502 Assembly"
                          implementationClass="org.ca65.AsmFoldingBuilder"/>
+    <projectTemplate projectType="6502 Assembly" templatePath="projectTemplates/Generic 6502 Project.zip" category="true"/>
   </extensions>
 
   <actions>
