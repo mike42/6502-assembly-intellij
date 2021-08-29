@@ -29,13 +29,12 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version '2021.2'
+    version = '2021.2'
 }
 
 patchPluginXml {
     changeNotes = """This change adds a project template for generic 6502 projects, plus compatibility with 2021.2 IDE releases."""
-    version = '1.2'
-    sinceBuild='211.6693'
+    sinceBuild = '211.6693'
 }
 
 runIde {
