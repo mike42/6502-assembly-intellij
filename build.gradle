@@ -33,11 +33,12 @@ intellij {
 }
 
 patchPluginXml {
-    changeNotes = """This change adds a project template for generic 6502 projects."""
+    changeNotes = """This change adds a project template for generic 6502 projects, plus compatibility with 2021.2 IDE releases."""
+    version = '1.2'
+    sinceBuild='211.6693'
 }
 
 runIde {
-
    debugOptions {
        enabled = true
        port = 5005
