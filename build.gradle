@@ -8,7 +8,7 @@ apply plugin: 'org.jetbrains.grammarkit'
 import org.jetbrains.grammarkit.tasks.*
 
 group 'org.ca65'
-version '1.2'
+version '1.3'
 sourceCompatibility = 11
 
 repositories {
@@ -29,11 +29,16 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version = '2021.2'
+    version = '2021.3'
+    updateSinceUntilBuild = false
+}
+
+runPluginVerifier {
+    ideVersions = ['IC-2021.3.1', 'CL-2021.3.2']
 }
 
 patchPluginXml {
-    changeNotes = """This change adds a project template for generic 6502 projects, plus compatibility with 2021.2 IDE releases."""
+    changeNotes = """This change adds compatibility with 2021.3 IDE releases."""
     sinceBuild = '211.6693'
 }
 

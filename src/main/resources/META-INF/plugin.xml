@@ -19,6 +19,8 @@
   <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
        on how to target different products -->
   <depends>com.intellij.modules.platform</depends>
+  
+  <incompatible-with>com.intellij.modules.clion</incompatible-with>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Assembly file" implementationClass="org.ca65.AsmFileType" fieldName="INSTANCE"
