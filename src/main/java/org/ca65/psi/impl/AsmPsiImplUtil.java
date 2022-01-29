@@ -5,10 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import org.ca65.AsmIcons;
-import org.ca65.psi.AsmElementFactory;
-import org.ca65.psi.AsmIdentifierr;
-import org.ca65.psi.AsmMarker;
-import org.ca65.psi.AsmTypes;
+import org.ca65.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -18,6 +15,15 @@ public class AsmPsiImplUtil {
         ASTNode keyNode = element.getNode().findChildByType(AsmTypes.LABEL);
         if (keyNode != null) {
             return keyNode.getText().replaceAll("\\\\ ", " ").replaceAll(":$", "").replaceAll("^@", "");
+        } else {
+            return null;
+        }
+    }
+
+    public static String getLabelName(AsmIdentifierdef element) {
+        ASTNode keyNode = element.getNode().findChildByType(AsmTypes.IDENTIFIERR);
+        if (keyNode != null) {
+            return keyNode.getText().replaceAll("\\\\ ", " ");
         } else {
             return null;
         }
@@ -42,8 +48,28 @@ public class AsmPsiImplUtil {
         return element;
     }
 
+    public static PsiElement setName(AsmIdentifierdef element, String newName) {
+        ASTNode identifierNode = element.getNode().findChildByType(AsmTypes.IDENTIFIERR);
+        if (identifierNode == null) {
+            return element;
+        }
+        AsmIdentifierdef newIdentifierDef = AsmElementFactory.createIdentifierDef(element.getProject(), newName);
+        ASTNode newIdentifierNode = newIdentifierDef.getFirstChild().getNode();
+        element.getNode().replaceChild(identifierNode, newIdentifierNode);
+        return element;
+    }
+
     public static PsiElement getNameIdentifier(AsmMarker element) {
         ASTNode labelNode = element.getNode().findChildByType(AsmTypes.LABEL);
+        if (labelNode != null) {
+            return labelNode.getPsi();
+        } else {
+            return null;
+        }
+    }
+
+    public static PsiElement getNameIdentifier(AsmIdentifierdef element) {
+        ASTNode labelNode = element.getNode().findChildByType(AsmTypes.IDENTIFIERR);
         if (labelNode != null) {
             return labelNode.getPsi();
         } else {
@@ -91,6 +117,15 @@ public class AsmPsiImplUtil {
         ASTNode keyNode = asmLocalLabelRref.getNode();
         if (keyNode != null) {
             return keyNode.getText().replaceAll("\\\\ ", " ").replaceAll("^@", "");
+        } else {
+            return null;
+        }
+    }
+
+    public static String getName(AsmIdentifierdef asmIdentifierdef) {
+        ASTNode keyNode = asmIdentifierdef.getNode().findChildByType(AsmTypes.IDENTIFIERR);
+        if (keyNode != null) {
+            return keyNode.getText().replaceAll("\\\\ ", " ");
         } else {
             return null;
         }

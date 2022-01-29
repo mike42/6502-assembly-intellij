@@ -49,7 +49,7 @@ public class AsmSyntaxHighlighter extends SyntaxHighlighterBase {
             return STRING_LITERAL_KEYS;
         } else if(tokenType.equals(AsmTypes.MNEMONIC) || tokenType.equals(AsmTypes.REGISTER)) {
             return MNEMONIC_KEYS;
-        } else if(tokenType.equals(AsmTypes.DOT_KEYWORD)) {
+        } else if(tokenType.equals(AsmTypes.DOT_KEYWORD) || tokenType.equals(AsmTypes.IMPORT_KEYWORD)) {
             return DOT_KEYWORD_KEYS;
         } else if(tokenType.equals(AsmTypes.IDENTIFIER) || tokenType.equals(AsmTypes.LABEL) || tokenType.equals(AsmTypes.LOCAL_LABEL_REF)) {
             return IDENTIFIER_KEYS;

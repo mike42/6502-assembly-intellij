@@ -68,6 +68,10 @@ public class AsmIdentifierImpl extends ASTWrapperPsiElement implements AsmIdenti
                     String myName = getName();
                     String theirName = ((AsmMarkerImpl) element).getName();
                     return myName != null && myName.equals(theirName);
+                } else if (element instanceof AsmIdentifierdefImpl) {
+                    String myName = getName();
+                    String theirName = ((AsmIdentifierdefImpl) element).getName();
+                    return myName != null && myName.equals(theirName);
                 }
                 return false;
             }

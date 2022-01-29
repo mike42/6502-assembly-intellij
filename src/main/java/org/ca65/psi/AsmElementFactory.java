@@ -30,4 +30,11 @@ public class AsmElementFactory {
         String name = "dummy.s";
         return (AsmFile) PsiFileFactory.getInstance(project).createFileFromText(name, AsmFileType.INSTANCE, text);
     }
+
+    public static AsmIdentifierdef createIdentifierDef(Project project, String newName) {
+        String text = ".import " + newName + "\n";
+        final AsmFile file = createFile(project, text);
+        // Walk through to identifier (this is quite fragile)
+        return (AsmIdentifierdef) file.getFirstChild().getFirstChild().getNextSibling().getNextSibling();
+    }
 }

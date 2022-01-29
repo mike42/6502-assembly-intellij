@@ -8,6 +8,8 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.ca65.psi.AsmFile;
+import org.ca65.psi.AsmIdentifierdef;
+import org.ca65.psi.AsmImports;
 import org.ca65.psi.AsmMarker;
 import org.ca65.psi.impl.AsmPsiImplUtil;
 
@@ -21,13 +23,25 @@ public class AsmUtil {
         if(asmFile == null) {
             return null;
         }
+        // Defined labels
         AsmMarker[] markers = PsiTreeUtil.getChildrenOfType(asmFile, AsmMarker.class);
-        if (markers == null) {
-            return null;
+        if (markers != null) {
+            for (AsmMarker marker : markers) {
+                if (identifier.equals(AsmPsiImplUtil.getLabelName(marker))) {
+                    return marker;
+                }
+            }
         }
-        for (AsmMarker marker : markers) {
-            if (identifier.equals(AsmPsiImplUtil.getLabelName(marker))) {
-               return marker;
+        // Imported values. For reasons unknown, getChildrenOfType(asmFile, AsmIdentifierdef.class) is null, but this works too.
+        AsmImports[] importStatements = PsiTreeUtil.getChildrenOfType(asmFile, AsmImports.class);
+        if (importStatements != null) {
+            for (AsmImports importStatement : importStatements) {
+                for(AsmIdentifierdef identifierdef : importStatement.getIdentifierdefList()) {
+                    if (identifier.equals(AsmPsiImplUtil.getLabelName(identifierdef))) {
+                        return identifierdef;
+                    }
+                }
+                return null;
             }
         }
         return null;

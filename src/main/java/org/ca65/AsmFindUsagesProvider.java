@@ -5,6 +5,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
+import org.ca65.psi.AsmIdentifierdef;
 import org.ca65.psi.AsmMarker;
 import org.ca65.psi.AsmTypes;
 import org.ca65.psi.impl.AsmPsiImplUtil;
@@ -25,6 +26,9 @@ public class AsmFindUsagesProvider implements FindUsagesProvider {
     @Override
     public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
         if(psiElement instanceof AsmMarker) {
+            return true;
+        }
+        if(psiElement instanceof AsmIdentifierdef) {
             return true;
         }
         return false;
@@ -48,6 +52,9 @@ public class AsmFindUsagesProvider implements FindUsagesProvider {
     public @Nls @NotNull String getDescriptiveName(@NotNull PsiElement element) {
         if(element instanceof AsmMarker) {
             return AsmPsiImplUtil.getName((AsmMarker) element);
+        }
+        if(element instanceof AsmIdentifierdef) {
+            return AsmPsiImplUtil.getName((AsmIdentifierdef) element);
         }
         return element.getText();
     }
