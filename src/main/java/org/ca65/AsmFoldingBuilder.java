@@ -24,16 +24,19 @@ import java.util.List;
 public class AsmFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     @Override
     public FoldingDescriptor @NotNull [] buildFoldRegions(PsiElement root, @NotNull Document document, boolean quick) {
-        // Create folding regions for start/end of procs and scopes
+        // Create folding regions for start/end of procs, scopes, macros
         AsmDotexpr[] dotexprs = PsiTreeUtil.getChildrenOfType(root.getContainingFile(), AsmDotexpr.class);
         List<FoldingDescriptor> descriptors = new ArrayList<>();
         if(dotexprs != null) {
             Deque<AsmDotexpr> procStartStack = new LinkedList<>();
             Deque<AsmDotexpr> scopeStartStack = new LinkedList<>();
+            Deque<AsmDotexpr> macroStartStack = new LinkedList<>();
             for (AsmDotexpr expr : dotexprs) {
-                String exprText = expr.getFirstChild().getText();
+                String exprText = expr.getFirstChild().getText().toLowerCase();
                 if(exprText.equals(".proc")) {
                     procStartStack.add(expr);
+                } else if(exprText.equals(".macro")) {
+                    macroStartStack.add(expr);
                 } else if(exprText.equals(".scope")) {
                     scopeStartStack.add(expr);
                 } else if(!procStartStack.isEmpty() && exprText.equals(".endproc")) {
@@ -45,6 +48,11 @@ public class AsmFoldingBuilder extends FoldingBuilderEx implements DumbAware {
                     AsmDotexpr scopeStart = scopeStartStack.removeLast();
                     descriptors.add(new FoldingDescriptor(scopeStart.getNode(),
                             new TextRange(scopeStart.getTextRange().getEndOffset(),
+                                    expr.getTextRange().getEndOffset())));
+                } else if(!macroStartStack.isEmpty() && exprText.equals(".endmacro")) {
+                    AsmDotexpr macroStart = macroStartStack.removeLast();
+                    descriptors.add(new FoldingDescriptor(macroStart.getNode(),
+                            new TextRange(macroStart.getTextRange().getEndOffset(),
                                     expr.getTextRange().getEndOffset())));
                 }
             }
