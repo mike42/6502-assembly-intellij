@@ -7,10 +7,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.ca65.psi.AsmFile;
-import org.ca65.psi.AsmIdentifierdef;
-import org.ca65.psi.AsmImports;
-import org.ca65.psi.AsmMarker;
+import org.ca65.psi.*;
 import org.ca65.psi.impl.AsmPsiImplUtil;
 
 import java.util.ArrayList;
@@ -32,7 +29,7 @@ public class AsmUtil {
                 }
             }
         }
-        // Imported values. For reasons unknown, getChildrenOfType(asmFile, AsmIdentifierdef.class) is null, but this works too.
+        // Imported values. For reasons unknown, getChildrenOfType(asmFile, AsmIdentifierdef.class) is always null, but this works.
         AsmImports[] importStatements = PsiTreeUtil.getChildrenOfType(asmFile, AsmImports.class);
         if (importStatements != null) {
             for (AsmImports importStatement : importStatements) {
@@ -41,7 +38,16 @@ public class AsmUtil {
                         return identifierdef;
                     }
                 }
-                return null;
+            }
+        }
+        // Imported values. For reasons unknown, getChildrenOfType(asmFile, AsmIdentifierdef.class) is always null, but this works.
+        AsmDefine[] defineStatements = PsiTreeUtil.getChildrenOfType(asmFile, AsmDefine.class);
+        if (defineStatements != null) {
+            for (AsmDefine defineStatement : defineStatements) {
+                AsmIdentifierdef identifierDef = defineStatement.getIdentifierdef();
+                if (identifier.equals(AsmPsiImplUtil.getLabelName(identifierDef))) {
+                    return identifierDef;
+                }
             }
         }
         return null;
