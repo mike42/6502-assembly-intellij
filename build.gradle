@@ -8,7 +8,7 @@ apply plugin: 'org.jetbrains.grammarkit'
 import org.jetbrains.grammarkit.tasks.*
 
 group 'org.ca65'
-version '1.4'
+version '1.5'
 sourceCompatibility = 11
 
 repositories {
@@ -38,12 +38,7 @@ runPluginVerifier {
 }
 
 patchPluginXml {
-    changeNotes = """This change adds 'Go to definition' and 'Find usages' support for constants and imports, and allows for labels to be auto-completed when entering text after an assembly mnemonic.
-
-    Code folding has also been overhauled, and now supports macro definitions, conditional blocks, and a number of other constructs. A code folding bug has also been corrected, where keywords such as .proc and .scope were incorrectly interpreted as case sensitive.
-
-    The 6502 Assembly file type now includes files with the ".mac" extension, which is used by ca65 macro definitions.
-    """
+    changeNotes = """This change adds an intention action for converting numeric literals to hexadecimal."""
     sinceBuild = '211.6693'
 }
 

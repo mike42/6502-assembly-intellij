@@ -41,7 +41,14 @@
     <lang.foldingBuilder language="6502 Assembly"
                          implementationClass="org.ca65.AsmFoldingBuilder"/>
     <completion.contributor language="6502 Assembly" implementationClass="org.ca65.AsmIdentifierCompletionContributor" />
+
     <projectTemplate projectType="6502 Assembly" templatePath="projectTemplates/Generic 6502 Project.zip" category="true"/>
+
+    <intentionAction>
+      <className>org.ca65.action.ConvertNumberToHexadecimalIntentionAction</className>
+      <bundleName>messages.Asm6502Bundle</bundleName>
+      <categoryKey>INTN.category.asm6502</categoryKey>
+    </intentionAction>
   </extensions>
 
   <actions>
