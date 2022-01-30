@@ -8,7 +8,7 @@ apply plugin: 'org.jetbrains.grammarkit'
 import org.jetbrains.grammarkit.tasks.*
 
 group 'org.ca65'
-version '1.3'
+version '1.4'
 sourceCompatibility = 11
 
 repositories {
@@ -38,7 +38,7 @@ runPluginVerifier {
 }
 
 patchPluginXml {
-    changeNotes = """This change adds compatibility with 2021.3 IDE releases."""
+    changeNotes = """This change adds 'Go to definition' and 'Find usages' support for constants and imports. It also adds support for code folding of macro definitions, corrects a bug where code folding incorrectly treated the .proc and .scope keywords as case sensitive."""
     sinceBuild = '211.6693'
 }
 
