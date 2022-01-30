@@ -15,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.ca65.action.IntentionActionUtil.*;
 
-public class ConvertNumberToHexadecimalIntentionAction extends BaseIntentionAction {
+public class ConvertNumberToDecimalIntentionAction extends BaseIntentionAction {
     @Override
     public @NotNull @IntentionFamilyName String getFamilyName() {
-        return Asm6502Bundle.message("INTN.NAME.convert.to.hex");
+        return Asm6502Bundle.message("INTN.NAME.convert.to.dec");
     }
 
     @Override
@@ -31,40 +31,36 @@ public class ConvertNumberToHexadecimalIntentionAction extends BaseIntentionActi
             return false;
         }
         String text = literal.getText();
-        if (!canConvertToHex(text)) {
+        if (!canConvertToDecimal(text)) {
             return false;
         }
-        setText(Asm6502Bundle.message("INTN.convert.to.hex", literal.getText()));
+        setText(Asm6502Bundle.message("INTN.convert.to.dec", literal.getText()));
         return true;
     }
 
-    private static boolean canConvertToHex(String str) {
-        return isConvertibleDec(str) || isConvertibleBin(str);
+    private static boolean canConvertToDecimal(String text) {
+        return isConvertibleBin(text) || isConvertibleHex(text);
     }
 
-    private static String doConvertToHex(String str) {
+    private static String doConvertToDecimal(String str) {
         // Parse
         final int intValue;
         if(str.startsWith("%")) {
-            intValue = Integer.parseInt(str.substring(1), 2);; // From bin eg. "%01010"
+            intValue = Integer.parseInt(str.substring(1), 2); // From bin eg. "%01010"
         } else {
-            intValue = Integer.parseInt(str, 10); // From dec eg. "42"
+            intValue = Integer.parseInt(str.substring(1), 16); // From hex eg. "$ff"
         }
-        String rawHexString = Integer.toHexString(intValue);
-        if(rawHexString.length() % 2 == 1) {    // Even number of digits. Expect 8 bit, 16 bit, 24-bit values.
-            rawHexString = "0" + rawHexString;
-        }
-        return "$" + rawHexString; // Prefixed with $
+        return Integer.toString(intValue);
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         AsmNumericLiteral literal = getAsmNumericLiteral(editor, file);
-        if(literal == null || !canConvertToHex(literal.getText())) {
+        if(literal == null || !canConvertToDecimal(literal.getText())) {
             // Some weirdness if this happens
             return;
         }
-        String replacement = doConvertToHex(literal.getText());
+        String replacement = doConvertToDecimal(literal.getText());
         PsiElement newLiteral = AsmElementFactory.createNumericLiteral(project, replacement);
         literal.replace(newLiteral);
     }

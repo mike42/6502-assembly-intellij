@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.apache.commons.lang.StringUtils;
 import org.ca65.Asm6502Bundle;
 import org.ca65.psi.AsmElementFactory;
 import org.ca65.psi.AsmFile;
@@ -15,10 +16,10 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.ca65.action.IntentionActionUtil.*;
 
-public class ConvertNumberToHexadecimalIntentionAction extends BaseIntentionAction {
+public class ConvertNumberToBinaryIntentionAction extends BaseIntentionAction {
     @Override
     public @NotNull @IntentionFamilyName String getFamilyName() {
-        return Asm6502Bundle.message("INTN.NAME.convert.to.hex");
+        return Asm6502Bundle.message("INTN.NAME.convert.to.bin");
     }
 
     @Override
@@ -31,40 +32,44 @@ public class ConvertNumberToHexadecimalIntentionAction extends BaseIntentionActi
             return false;
         }
         String text = literal.getText();
-        if (!canConvertToHex(text)) {
+        if (!canConvertToBinary(text)) {
             return false;
         }
-        setText(Asm6502Bundle.message("INTN.convert.to.hex", literal.getText()));
+        setText(Asm6502Bundle.message("INTN.convert.to.bin", literal.getText()));
         return true;
     }
 
-    private static boolean canConvertToHex(String str) {
-        return isConvertibleDec(str) || isConvertibleBin(str);
+    private static boolean canConvertToBinary(String text) {
+        return isConvertibleDec(text) || isConvertibleHex(text);
     }
 
-    private static String doConvertToHex(String str) {
+    private static String doConvertToBinary(String str) {
         // Parse
         final int intValue;
-        if(str.startsWith("%")) {
-            intValue = Integer.parseInt(str.substring(1), 2);; // From bin eg. "%01010"
+        if(str.startsWith("$")) {
+            intValue = Integer.parseInt(str.substring(1), 16); // From hex eg. "$ff"
         } else {
-            intValue = Integer.parseInt(str, 10); // From dec eg. "42"
+            intValue = Integer.parseInt(str, 10);  // From dec eg. "42"
         }
-        String rawHexString = Integer.toHexString(intValue);
-        if(rawHexString.length() % 2 == 1) {    // Even number of digits. Expect 8 bit, 16 bit, 24-bit values.
-            rawHexString = "0" + rawHexString;
+        String binString = Integer.toBinaryString(intValue);
+        // Pad to 8 bit, 16 bit, 24-bit values.
+        int currentLen = binString.length();
+        int remainder = currentLen % 8;
+        if(remainder != 0) {
+            // Pad to multiple of 8 bits
+            binString = StringUtils.leftPad(binString, (currentLen + 8) - remainder, "0");
         }
-        return "$" + rawHexString; // Prefixed with $
+        return "%" + binString; // Prefixed with %
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         AsmNumericLiteral literal = getAsmNumericLiteral(editor, file);
-        if(literal == null || !canConvertToHex(literal.getText())) {
+        if(literal == null || !canConvertToBinary(literal.getText())) {
             // Some weirdness if this happens
             return;
         }
-        String replacement = doConvertToHex(literal.getText());
+        String replacement = doConvertToBinary(literal.getText());
         PsiElement newLiteral = AsmElementFactory.createNumericLiteral(project, replacement);
         literal.replace(newLiteral);
     }

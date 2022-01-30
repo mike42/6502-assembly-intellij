@@ -49,6 +49,16 @@
       <bundleName>messages.Asm6502Bundle</bundleName>
       <categoryKey>INTN.category.asm6502</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <className>org.ca65.action.ConvertNumberToDecimalIntentionAction</className>
+      <bundleName>messages.Asm6502Bundle</bundleName>
+      <categoryKey>INTN.category.asm6502</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>org.ca65.action.ConvertNumberToBinaryIntentionAction</className>
+      <bundleName>messages.Asm6502Bundle</bundleName>
+      <categoryKey>INTN.category.asm6502</categoryKey>
+    </intentionAction>
   </extensions>
 
   <actions>

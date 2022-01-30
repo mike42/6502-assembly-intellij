@@ -38,7 +38,7 @@ runPluginVerifier {
 }
 
 patchPluginXml {
-    changeNotes = """This change adds an intention action for converting numeric literals to hexadecimal."""
+    changeNotes = """This change adds intention actions for converting numeric literals between hexadecimal, decimal and binary representations."""
     sinceBuild = '211.6693'
 }
 
