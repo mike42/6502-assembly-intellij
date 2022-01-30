@@ -24,7 +24,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Assembly file" implementationClass="org.ca65.AsmFileType" fieldName="INSTANCE"
-              language="6502 Assembly" extensions="s;asm;inc"/>
+              language="6502 Assembly" extensions="s;asm;inc;mac"/>
     <lang.parserDefinition language="6502 Assembly"
                            implementationClass="org.ca65.AsmParserDefinition"/>
     <lang.syntaxHighlighterFactory language="6502 Assembly"

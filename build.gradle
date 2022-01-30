@@ -38,7 +38,12 @@ runPluginVerifier {
 }
 
 patchPluginXml {
-    changeNotes = """This change adds 'Go to definition' and 'Find usages' support for constants and imports. It also adds support for code folding of macro definitions, corrects a bug where code folding incorrectly treated the .proc and .scope keywords as case sensitive."""
+    changeNotes = """This change adds 'Go to definition' and 'Find usages' support for constants and imports, and allows for labels to be auto-completed when entering text after an assembly mnemonic.
+
+    Code folding has also been overhauled, and now supports macro definitions, conditional blocks, and a number of other constructs. A code folding bug has also been corrected, where keywords such as .proc and .scope were incorrectly interpreted as case sensitive.
+
+    The 6502 Assembly file type now includes files with the ".mac" extension, which is used by ca65 macro definitions.
+    """
     sinceBuild = '211.6693'
 }
 

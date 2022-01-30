@@ -18,7 +18,7 @@ implements("identifierdef")="com.intellij.psi.PsiNamedElement"
 
 asmFile ::= item_*
 
-private item_ ::= marker? (dotexpr|imports|assign|define|macro|llabel)? COMMENT? EOL_WS
+private item_ ::= marker? (dotexpr|imports|define_constant_label|define_constant_numeric|macro|llabel)? COMMENT? EOL_WS
 
 marker ::= (LABEL | SHORTLABEL) {
     mixin="org.ca65.psi.impl.AsmLabelDefinitionImpl"
@@ -34,8 +34,8 @@ dotexpr ::= DOT_KEYWORD expr
 macro ::= IDENTIFIER expr
 llabel ::=  MNEMONIC expr?
 
-define ::= identifierdef ( EQUALS ) expr
-assign ::= identifierr ( COLON_EQUALS ) expr
+define_constant_numeric ::= identifierdef ( EQUALS ) expr
+define_constant_label ::= identifierdef ( COLON_EQUALS ) expr
 
 expr ::= anything*
 

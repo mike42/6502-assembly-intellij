@@ -40,11 +40,21 @@ public class AsmUtil {
                 }
             }
         }
-        // Imported values. For reasons unknown, getChildrenOfType(asmFile, AsmIdentifierdef.class) is always null, but this works.
-        AsmDefine[] defineStatements = PsiTreeUtil.getChildrenOfType(asmFile, AsmDefine.class);
-        if (defineStatements != null) {
-            for (AsmDefine defineStatement : defineStatements) {
-                AsmIdentifierdef identifierDef = defineStatement.getIdentifierdef();
+        // Numeric constants
+        AsmDefineConstantNumeric[] numericConstantList = PsiTreeUtil.getChildrenOfType(asmFile, AsmDefineConstantNumeric.class);
+        if (numericConstantList != null) {
+            for (AsmDefineConstantNumeric numericConstant : numericConstantList) {
+                AsmIdentifierdef identifierDef = numericConstant.getIdentifierdef();
+                if (identifier.equals(AsmPsiImplUtil.getLabelName(identifierDef))) {
+                    return identifierDef;
+                }
+            }
+        }
+        // label constants
+        AsmDefineConstantLabel[] labelConstantList = PsiTreeUtil.getChildrenOfType(asmFile, AsmDefineConstantLabel.class);
+        if (labelConstantList != null) {
+            for (AsmDefineConstantLabel labelConstant : labelConstantList) {
+                AsmIdentifierdef identifierDef = labelConstant.getIdentifierdef();
                 if (identifier.equals(AsmPsiImplUtil.getLabelName(identifierDef))) {
                     return identifierDef;
                 }

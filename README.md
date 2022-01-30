@@ -11,7 +11,7 @@ This IntelliJ plugin provides basic support for 6502 assembly language. It is su
 - Find usages
 - Refactor/rename a label and its usages
 - Comment/uncomment blocks of code
-- Code folding for scopes, procedures and macro definitions.
+- Code folding for scopes, procedures and macro definitions
 
 ## Installation
 
