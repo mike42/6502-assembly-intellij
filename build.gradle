@@ -38,7 +38,11 @@ runPluginVerifier {
 }
 
 patchPluginXml {
-    changeNotes = """This change adds intention actions for converting numeric literals between hexadecimal, decimal and binary representations."""
+    changeNotes = """This change adds intention actions for converting numeric literals between hexadecimal, decimal and binary representations.
+
+It also adds a completion helper for assembly language mnemonics, an inspection to indicate when unsupported mnemonics are used, and a quick-fix for switching the CPU target to one which includes the unsupported mnemonic.
+
+The 'Generic 6502 Project' template has also been improved."""
     sinceBuild = '211.6693'
 }
 

@@ -32,16 +32,17 @@ identifierdef ::= identifierr {
 imports ::= IMPORT_KEYWORD identifierdef ( COMMA identifierdef )*
 dotexpr ::= DOT_KEYWORD expr
 macro ::= IDENTIFIER expr
-llabel ::=  MNEMONIC expr?
+llabel ::=  instruction_mnemonic expr?
 
 define_constant_numeric ::= identifierdef ( EQUALS ) expr
 define_constant_label ::= identifierdef ( COLON_EQUALS ) expr
 
 expr ::= anything*
 
-anything ::= (MNEMONIC|numeric_literal|STRING_LITERAL|DOT_KEYWORD|identifierr|LABEL|EQUALS|COLON_EQUALS|COMMA|REGISTER|CHAR_LITERAL|LPAREN|RPAREN|OR|LSHIFT|RSHIFT|AND|CONSTEXPR|SHORTLABEL_REF|local_label_rref|SHORTLABEL|HIBYTE|LOBYTE|BOOLOR|BOOLAND|NOT|DIV|MUL|ADD|SUB|XOR|SCOPE_ACCESS)
+anything ::= (instruction_mnemonic|numeric_literal|STRING_LITERAL|DOT_KEYWORD|identifierr|LABEL|EQUALS|COLON_EQUALS|COMMA|REGISTER|CHAR_LITERAL|LPAREN|RPAREN|OR|LSHIFT|RSHIFT|AND|CONSTEXPR|SHORTLABEL_REF|local_label_rref|SHORTLABEL|HIBYTE|LOBYTE|BOOLOR|BOOLAND|NOT|DIV|MUL|ADD|SUB|XOR|SCOPE_ACCESS)
 
 numeric_literal ::= INT_LITERAL
+instruction_mnemonic ::= MNEMONIC
 
 identifierr ::= IDENTIFIER {
     mixin="org.ca65.psi.impl.AsmIdentifierImpl"
