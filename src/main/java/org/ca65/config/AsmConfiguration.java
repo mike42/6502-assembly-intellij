@@ -14,6 +14,9 @@ public class AsmConfiguration implements PersistentStateComponent<AsmConfigurati
     public static class State {
         @XMap(entryTagName = "cpu")
         public String cpu;
+
+        @XMap(entryTagName = "referenceChecking")
+        public boolean referenceChecking = true;
     }
 
     private AsmConfiguration.State myState = new State();
@@ -33,8 +36,8 @@ public class AsmConfiguration implements PersistentStateComponent<AsmConfigurati
     }
 
     public Cpu getCpu() {
-        for(Cpu item : Cpu.values()) {
-            if(item.toString().equals(this.myState.cpu)) {
+        for (Cpu item : Cpu.values()) {
+            if (item.toString().equals(this.myState.cpu)) {
                 return item;
             }
         }
@@ -44,5 +47,13 @@ public class AsmConfiguration implements PersistentStateComponent<AsmConfigurati
 
     public void setCpu(Cpu newCpu) {
         this.myState.cpu = newCpu.toString();
+    }
+
+    public boolean isReferenceCheckingEnabled() {
+        return this.myState.referenceChecking;
+    }
+
+    public void setReferenceCheckingEnabled(boolean enabled) {
+        this.myState.referenceChecking = enabled;
     }
 }

@@ -34,7 +34,7 @@ public class ConvertNumberToDecimalIntentionAction extends BaseIntentionAction {
         if (!canConvertToDecimal(text)) {
             return false;
         }
-        setText(Asm6502Bundle.message("INTN.convert.to.dec", literal.getText()));
+        setText(Asm6502Bundle.message("INTN.convert.to.dec", literal.getText(), doConvertToDecimal(literal.getText())));
         return true;
     }
 

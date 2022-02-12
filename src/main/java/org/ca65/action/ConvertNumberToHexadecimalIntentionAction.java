@@ -34,7 +34,7 @@ public class ConvertNumberToHexadecimalIntentionAction extends BaseIntentionActi
         if (!canConvertToHex(text)) {
             return false;
         }
-        setText(Asm6502Bundle.message("INTN.convert.to.hex", literal.getText()));
+        setText(Asm6502Bundle.message("INTN.convert.to.hex", literal.getText(), doConvertToHex(literal.getText())));
         return true;
     }
 

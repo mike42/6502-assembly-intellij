@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 public class UnsupportedMnemonicAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull final PsiElement element, @NotNull AnnotationHolder holder) {
-        // Ensure the Psi Element is an expression
         if (!(element instanceof AsmInstructionMnemonic)) {
             return;
         }

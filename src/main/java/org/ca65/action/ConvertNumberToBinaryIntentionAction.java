@@ -35,7 +35,7 @@ public class ConvertNumberToBinaryIntentionAction extends BaseIntentionAction {
         if (!canConvertToBinary(text)) {
             return false;
         }
-        setText(Asm6502Bundle.message("INTN.convert.to.bin", literal.getText()));
+        setText(Asm6502Bundle.message("INTN.convert.to.bin", literal.getText(), doConvertToBinary(literal.getText())));
         return true;
     }
 

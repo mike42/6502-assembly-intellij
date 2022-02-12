@@ -8,7 +8,7 @@ apply plugin: 'org.jetbrains.grammarkit'
 import org.jetbrains.grammarkit.tasks.*
 
 group 'org.ca65'
-version '1.5'
+version '1.6'
 sourceCompatibility = 11
 
 repositories {
@@ -38,11 +38,9 @@ runPluginVerifier {
 }
 
 patchPluginXml {
-    changeNotes = """This change adds intention actions for converting numeric literals between hexadecimal, decimal and binary representations.
+    changeNotes = """This change adds warnings for unresolved references within the same assembly file, and also highlights unused declarations. The result is not correct for projects which include symbols from other files (as opposed to importing them), so this feature may be disabled per-project via an intention action.
 
-It also adds a completion helper for assembly language mnemonics, an inspection to indicate when unsupported mnemonics are used, and a quick-fix for switching the CPU target to one which includes the unsupported mnemonic.
-
-The 'Generic 6502 Project' template has also been improved."""
+    A new weak warning has been added to suggest padding hex and binary numbers to a whole byte, since eg. 7 digit binary numbers often indicate a problem."""
     sinceBuild = '211.6693'
 }
 
