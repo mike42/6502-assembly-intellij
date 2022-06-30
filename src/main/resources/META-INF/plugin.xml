@@ -40,8 +40,11 @@
     <lang.commenter language="6502 Assembly" implementationClass="org.ca65.AsmCommenter"/>
     <lang.foldingBuilder language="6502 Assembly"
                          implementationClass="org.ca65.AsmFoldingBuilder"/>
-    <completion.contributor language="6502 Assembly" implementationClass="org.ca65.AsmIdentifierCompletionContributor" />
-    <completion.contributor language="6502 Assembly" implementationClass="org.ca65.AsmMnemonicCompletionContributor" />
+    <lang.formatter
+            language="6502 Assembly"
+            implementationClass="org.ca65.formatting.AsmFormattingModelBuilder"/>
+    <completion.contributor language="6502 Assembly" implementationClass="org.ca65.AsmIdentifierCompletionContributor"/>
+    <completion.contributor language="6502 Assembly" implementationClass="org.ca65.AsmMnemonicCompletionContributor"/>
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.UnsupportedMnemonicAnnotator"/>
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmUnresolvedReferenceAnnotator"/>
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmUnusedReferenceAnnotator"/>

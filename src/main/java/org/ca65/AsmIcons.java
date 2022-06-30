@@ -10,4 +10,5 @@ public class AsmIcons {
 
     public static final Icon JUMP_TO_LABEL = IconLoader.getIcon("/icons/jumpToLabel.svg", AsmIcons.class);
     public static final Icon JUMP_TO_LOCAL_LABEL = IconLoader.getIcon("/icons/jumpToLocalLabel.svg", AsmIcons.class);
+    public static final Icon JUMP_TO_UNNAMED_LABEL = IconLoader.getIcon("/icons/jumpToUnnamedLabel.svg", AsmIcons.class);
 }
