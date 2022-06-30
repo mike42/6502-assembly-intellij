@@ -14,8 +14,10 @@ public class AsmFormattingModelBuilder implements FormattingModelBuilder {
                 .spaces(1)
                 .between(AsmTypes.EOL_WS, TokenSet.create(AsmTypes.LLABEL, AsmTypes.MACRO))
                 .spaces(4)
-                .between(AsmTypes.EOL_WS, TokenSet.create(AsmTypes.MARKER, AsmTypes.DOTEXPR, AsmTypes.IMPORTS, AsmTypes.DEFINE_CONSTANT_NUMERIC, AsmTypes.DEFINE_CONSTANT_LABEL))
+                .between(AsmTypes.EOL_WS, TokenSet.create(AsmTypes.MARKER, AsmTypes.IMPORTS, AsmTypes.DOTEXPR, AsmTypes.DEFINE_CONSTANT_NUMERIC, AsmTypes.DEFINE_CONSTANT_LABEL))
                 .spaces(0)
+                .between(AsmTypes.EOL_WS, AsmTypes.REGISTER_DOTEXPR)
+                .spaces(4)
                 .between(AsmTypes.EOL_WS, AsmTypes.COMMENT)
                 .spacing(0, 4, 0, false, 0)
                 .between(AsmTypes.INSTRUCTION_MNEMONIC, AsmTypes.EXPR)
@@ -28,7 +30,7 @@ public class AsmFormattingModelBuilder implements FormattingModelBuilder {
         final Alignment commentAlignment = Alignment.createAlignment(true, Alignment.Anchor.LEFT);
         return FormattingModelProvider
                 .createFormattingModelForPsiFile(formattingContext.getContainingFile(),
-                        new AsmStatementMaybe(formattingContext.getNode(),
+                        new AsmBlock(formattingContext.getNode(),
                                 Wrap.createWrap(WrapType.NONE, false),
                                 Alignment.createAlignment(),
                                 createSpaceBuilder(codeStyleSettings),

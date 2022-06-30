@@ -2,26 +2,43 @@ package org.ca65.formatting;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.common.AbstractBlock;
+import com.intellij.psi.tree.IElementType;
 import org.ca65.psi.AsmTypes;
-import org.codehaus.groovy.ast.builder.AstSpecificationCompiler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AsmBlock extends AbstractBlock {
     private final SpacingBuilder mySpacingBuilder;
+    private final Alignment myCommentAlignment;
 
-    public AsmBlock(ASTNode child, Alignment alignment, SpacingBuilder spacingBuilder) {
-        super(child, null, alignment);
+    protected AsmBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment,
+                       SpacingBuilder spacingBuilder, @Nullable Alignment commentAlignment) {
+        super(node, wrap, alignment);
         this.mySpacingBuilder = spacingBuilder;
+        this.myCommentAlignment = commentAlignment;
     }
 
     @Override
     protected List<Block> buildChildren() {
-        return Collections.emptyList();
+        List<Block> blocks = new ArrayList<>();
+        ASTNode child = myNode.getFirstChildNode();
+        while (child != null) {
+            IElementType elementType = child.getElementType();
+            if (elementType != TokenType.WHITE_SPACE) {
+                if (elementType == AsmTypes.COMMENT) {
+                    blocks.add(new AsmBlock(child, Wrap.createWrap(WrapType.NONE, false), myCommentAlignment, mySpacingBuilder, myCommentAlignment));
+                } else {
+                    blocks.add(new AsmBlock(child, Wrap.createWrap(WrapType.NONE, false), Alignment.createAlignment(), mySpacingBuilder, myCommentAlignment));
+                }
+            }
+            child = child.getTreeNext();
+        }
+        return blocks;
     }
 
     @Override
@@ -29,11 +46,12 @@ public class AsmBlock extends AbstractBlock {
         return Indent.getNoneIndent();
     }
 
+
     @Nullable
     @Override
     public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
         Spacing commentSpacing = getCommentSpacing(child1, child2);
-        if(commentSpacing != null) {
+        if (commentSpacing != null) {
             return commentSpacing;
         }
         // Go on with normal stuff
@@ -41,19 +59,26 @@ public class AsmBlock extends AbstractBlock {
     }
 
     private Spacing getCommentSpacing(@Nullable Block child1, @NotNull Block child2) {
-        // First check if this is an end-of-line comment.
         Block parent = this;
-        // Well well well.
         if (!(child1 instanceof ASTBlock) || !(child2 instanceof ASTBlock)) {
             return null;
         }
-
+        // First check if this is an end-of-line comment?
         ASTBlock blockChild1 = (ASTBlock) child1;
         ASTBlock blockChild2 = (ASTBlock) child2;
-        if ((blockChild1.getNode().getElementType() != AsmTypes.LLABEL && blockChild1.getNode().getElementType() != AsmTypes.INSTRUCTION_MNEMONIC) || blockChild2.getNode().getElementType() != AsmTypes.COMMENT) {
+        IElementType block1Type = blockChild1.getNode().getElementType();
+        if ((block1Type == AsmTypes.EOL_WS) || blockChild2.getNode().getElementType() != AsmTypes.COMMENT) {
             return null;
         }
-        return Spacing.createSpacing(50, 50, 0, false, 0);
+        // Well this quite a big hack
+        int indentSize = (block1Type == AsmTypes.LLABEL || block1Type == AsmTypes.MACRO || block1Type == AsmTypes.INSTRUCTION_MNEMONIC || block1Type == AsmTypes.REGISTER_DOTEXPR) ? 4 : 0;
+        int lenSoFar = indentSize + blockChild1.getTextRange().getLength();
+        int targetLen = 36;
+        int spacesBeforeComment = targetLen - lenSoFar;
+        while (spacesBeforeComment < 1) {
+            spacesBeforeComment += 4;
+        }
+        return Spacing.createSpacing(spacesBeforeComment, spacesBeforeComment, 0, false, 0);
     }
 
     @Override

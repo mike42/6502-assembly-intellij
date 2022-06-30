@@ -18,7 +18,7 @@ implements("identifierdef")="com.intellij.psi.PsiNamedElement"
 
 asmFile ::= item_*
 
-private item_ ::= marker? (dotexpr|imports|define_constant_label|define_constant_numeric|macro|llabel)? COMMENT? EOL_WS
+private item_ ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|macro|llabel)? COMMENT? EOL_WS
 
 marker ::= (LABEL | SHORTLABEL) {
     mixin="org.ca65.psi.impl.AsmLabelDefinitionImpl"
@@ -31,6 +31,7 @@ identifierdef ::= identifierr {
 }
 imports ::= IMPORT_KEYWORD identifierdef ( COMMA identifierdef )*
 dotexpr ::= DOT_KEYWORD expr
+register_dotexpr ::= REGISTER_DOT_KEYWORD
 macro ::= IDENTIFIER expr
 llabel ::=  instruction_mnemonic expr?
 
@@ -39,7 +40,7 @@ define_constant_label ::= identifierdef ( COLON_EQUALS ) expr
 
 expr ::= anything*
 
-anything ::= (instruction_mnemonic|numeric_literal|STRING_LITERAL|DOT_KEYWORD|identifierr|LABEL|EQUALS|COLON_EQUALS|COMMA|REGISTER|CHAR_LITERAL|LPAREN|RPAREN|LSQUAREBRACKET|RSQUAREBRACKET|OR|LSHIFT|RSHIFT|AND|CONSTEXPR|SHORTLABEL_REF|local_label_rref|SHORTLABEL|HIBYTE|LOBYTE|BOOLOR|BOOLAND|NOT|DIV|MUL|ADD|SUB|XOR|SCOPE_ACCESS)
+anything ::= (instruction_mnemonic|numeric_literal|STRING_LITERAL|DOT_KEYWORD|REGISTER_DOT_KEYWORD|identifierr|LABEL|EQUALS|COLON_EQUALS|COMMA|REGISTER|CHAR_LITERAL|LPAREN|RPAREN|LSQUAREBRACKET|RSQUAREBRACKET|OR|LSHIFT|RSHIFT|AND|CONSTEXPR|SHORTLABEL_REF|local_label_rref|SHORTLABEL|HIBYTE|LOBYTE|BOOLOR|BOOLAND|NOT|DIV|MUL|ADD|SUB|XOR|SCOPE_ACCESS)
 
 numeric_literal ::= INT_LITERAL
 instruction_mnemonic ::= MNEMONIC
