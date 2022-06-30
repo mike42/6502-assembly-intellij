@@ -102,6 +102,8 @@ LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
     ":="                       { return COLON_EQUALS; }
     "("                        { return LPAREN; }
     ")"                        { return RPAREN; }
+    "["                        { return LSQUAREBRACKET; }
+    "]"                        { return RSQUAREBRACKET; }
     "||"                       { return BOOLOR; }
     "|"                        { return OR; }
     "<<"                       { return LSHIFT; }
