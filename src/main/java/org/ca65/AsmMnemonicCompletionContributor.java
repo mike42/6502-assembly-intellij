@@ -14,7 +14,7 @@ import java.awt.*;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static org.ca65.helpers.MnemonicHelper.allMnemnonics;
+import static org.ca65.helpers.MnemonicHelper.allMnemonics;
 
 public class AsmMnemonicCompletionContributor extends CompletionContributor {
     public AsmMnemonicCompletionContributor() {
@@ -30,12 +30,12 @@ class MnemonicCompletionProvider extends CompletionProvider<CompletionParameters
         Color mnemonicColor = AsmSyntaxHighlighter.MNEMONIC.getDefaultAttributes().getForegroundColor();
         Cpu projectCpu = AsmConfiguration.getInstance(parameters.getPosition().getProject()).getCpu();
         Set<String> mnemonicsToShow = MnemonicHelper.getMnemonicsForCpu(projectCpu);
-        for(MnemonicInfo completionMnemonic : allMnemnonics) {
-            if(!mnemonicsToShow.contains(completionMnemonic.mnemnonic)) {
+        for(MnemonicInfo completionMnemonic : allMnemonics) {
+            if(!mnemonicsToShow.contains(completionMnemonic.mnemonic)) {
                 // Skip mnemonics which aren't valid for this CPU.
                 continue;
             }
-            resultSet.addElement(LookupElementBuilder.create(completionMnemonic.mnemnonic)
+            resultSet.addElement(LookupElementBuilder.create(completionMnemonic.mnemonic)
                     .withItemTextForeground(mnemonicColor)
                     .withTailText(" " + completionMnemonic.description));
         }

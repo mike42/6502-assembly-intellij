@@ -14,6 +14,7 @@ This is plugin for JetBrains IDE's, which provides basic support for 6502 assemb
 - Code folding for scopes, procedures and macro definitions
 - Completion suggestions for mnemonics and labels
 - Warnings for undefined and unused symbols
+- Code formatting
 
 ## Installation
 

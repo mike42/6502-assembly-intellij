@@ -1,11 +1,11 @@
 package org.ca65.helpers;
 
 public class MnemonicInfo {
-    public String mnemnonic;
+    public String mnemonic;
     public String description;
 
     public MnemonicInfo(String mnemonic, String description) {
-        this.mnemnonic = mnemonic;
+        this.mnemonic = mnemonic;
         this.description = description;
     }
 }

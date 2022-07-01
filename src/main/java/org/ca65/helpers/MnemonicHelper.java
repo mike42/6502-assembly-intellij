@@ -3,7 +3,7 @@ package org.ca65.helpers;
 import java.util.Set;
 
 public class MnemonicHelper {
-    public static MnemonicInfo[] allMnemnonics = new MnemonicInfo[] {
+    public static MnemonicInfo[] allMnemonics = new MnemonicInfo[] {
             new MnemonicInfo("adc", "Add Memory to Accumulator with Carry"),
             new MnemonicInfo("and", "\"AND\" Memory with Accumulator"),
             new MnemonicInfo("asl", "Shift One Bit Left, Memory or Accumulator"),
@@ -130,18 +130,18 @@ public class MnemonicHelper {
             new MnemonicInfo("xce", "Exchange Carry and Emulation Bits"),
     };
 
-    public static Set<String> validMnemnonics65C816 = Set.of("adc", "and", "asl", "bcc", "bcs", "beq", "bit", "bmi", "bne", "bpl", "bra", "brk", "brl", "bvc", "bvs", "clc", "cld", "cli", "clv", "cmp", "cop", "cpx", "cpy", "dec", "dex", "dey", "eor", "inc", "inx", "iny", "jml", "jmp", "jsl", "jsr", "lda", "ldx", "ldy", "lsr", "mvn", "mvp", "nop", "ora", "pea", "pei", "per", "pha", "phb", "phd", "phk", "php", "phx", "phy", "pla", "plb", "pld", "plp", "plx", "ply", "rep", "rol", "ror", "rti", "rtl", "rts", "sbc", "sep", "sec", "sed", "sei", "sta", "stp", "stx", "sty", "stz", "tax", "tay", "tcd", "tcs", "tdc", "trb", "tsb", "tsc", "tsx", "txa", "txs", "txy", "tya", "tyx", "wai", "wdm", "xba", "xce");
-    public static Set<String> validMnemnonics65C02 = Set.of("adc", "and", "asl", "bbr0", "bbr1", "bbr2", "bbr3", "bbr4", "bbr5", "bbr6", "bbr7", "bbs0", "bbs1", "bbs2", "bbs3", "bbs4", "bbs5", "bbs6", "bbs7", "bcc", "bcs", "beq", "bit", "bmi", "bne", "bpl", "bra", "brk", "bvc", "bvs", "clc", "cld", "cli", "clv", "cmp", "cpx", "cpy", "dec", "dex", "dey", "eor", "inc", "inx", "iny", "jmp", "jsr", "lda", "ldx", "ldy", "lsr", "nop", "ora", "pha", "php", "phx", "phy", "pla", "plp", "plx", "ply", "rmb0", "rmb1", "rmb2", "rmb3", "rmb4", "rmb5", "rmb6", "rmb7", "rol", "ror", "rti", "rts", "sbc", "sec", "sed", "sei", "smb0", "smb1", "smb2", "smb3", "smb4", "smb5", "smb6", "smb7", "sta", "stp", "stx", "sty", "stz", "tax", "tay", "trb", "tsb", "tsx", "txa", "txs", "tya", "wai");
-    public static Set<String> validMnemnonics6502 = Set.of("adc", "and", "asl", "bcc", "bcs", "beq", "bit", "bmi", "bne", "bpl", "brk", "bvc", "bvs", "clc", "cld", "cli", "clv", "cmp", "cpx", "cpy", "dec", "dex", "dey", "eor", "inc", "inx", "iny", "jmp", "jsr", "lda", "ldx", "ldy", "lsr", "nop", "ora", "pha", "php", "pla", "plp", "ror", "rti", "rts", "sbc", "sec", "sed", "sei", "sta", "stx", "sty", "tax", "tay", "tsx", "txa", "txs", "tya");
+    public static Set<String> validMnemonics65C816 = Set.of("adc", "and", "asl", "bcc", "bcs", "beq", "bit", "bmi", "bne", "bpl", "bra", "brk", "brl", "bvc", "bvs", "clc", "cld", "cli", "clv", "cmp", "cop", "cpx", "cpy", "dec", "dex", "dey", "eor", "inc", "inx", "iny", "jml", "jmp", "jsl", "jsr", "lda", "ldx", "ldy", "lsr", "mvn", "mvp", "nop", "ora", "pea", "pei", "per", "pha", "phb", "phd", "phk", "php", "phx", "phy", "pla", "plb", "pld", "plp", "plx", "ply", "rep", "rol", "ror", "rti", "rtl", "rts", "sbc", "sep", "sec", "sed", "sei", "sta", "stp", "stx", "sty", "stz", "tax", "tay", "tcd", "tcs", "tdc", "trb", "tsb", "tsc", "tsx", "txa", "txs", "txy", "tya", "tyx", "wai", "wdm", "xba", "xce");
+    public static Set<String> validMnemonics65C02 = Set.of("adc", "and", "asl", "bbr0", "bbr1", "bbr2", "bbr3", "bbr4", "bbr5", "bbr6", "bbr7", "bbs0", "bbs1", "bbs2", "bbs3", "bbs4", "bbs5", "bbs6", "bbs7", "bcc", "bcs", "beq", "bit", "bmi", "bne", "bpl", "bra", "brk", "bvc", "bvs", "clc", "cld", "cli", "clv", "cmp", "cpx", "cpy", "dec", "dex", "dey", "eor", "inc", "inx", "iny", "jmp", "jsr", "lda", "ldx", "ldy", "lsr", "nop", "ora", "pha", "php", "phx", "phy", "pla", "plp", "plx", "ply", "rmb0", "rmb1", "rmb2", "rmb3", "rmb4", "rmb5", "rmb6", "rmb7", "rol", "ror", "rti", "rts", "sbc", "sec", "sed", "sei", "smb0", "smb1", "smb2", "smb3", "smb4", "smb5", "smb6", "smb7", "sta", "stp", "stx", "sty", "stz", "tax", "tay", "trb", "tsb", "tsx", "txa", "txs", "tya", "wai");
+    public static Set<String> validMnemonics6502 = Set.of("adc", "and", "asl", "bcc", "bcs", "beq", "bit", "bmi", "bne", "bpl", "brk", "bvc", "bvs", "clc", "cld", "cli", "clv", "cmp", "cpx", "cpy", "dec", "dex", "dey", "eor", "inc", "inx", "iny", "jmp", "jsr", "lda", "ldx", "ldy", "lsr", "nop", "ora", "pha", "php", "pla", "plp", "ror", "rti", "rts", "sbc", "sec", "sed", "sei", "sta", "stx", "sty", "tax", "tay", "tsx", "txa", "txs", "tya");
 
     public static Set<String> getMnemonicsForCpu(Cpu cpu) {
         switch (cpu) {
             case CPU_6502:
-                return validMnemnonics6502;
+                return validMnemonics6502;
             case CPU_65C02:
-                return validMnemnonics65C02;
+                return validMnemonics65C02;
             case CPU_65C816:
-                return validMnemnonics65C816;
+                return validMnemonics65C816;
         }
         throw new UnsupportedOperationException("Unknown CPU " + cpu);
     }
