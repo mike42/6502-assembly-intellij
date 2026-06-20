@@ -1,6 +1,6 @@
 build
 .gradle/
-gradle
+.intellijPlatform/
 .idea/
 jflex-1.7.0-2.jar
 src/main/gen/
