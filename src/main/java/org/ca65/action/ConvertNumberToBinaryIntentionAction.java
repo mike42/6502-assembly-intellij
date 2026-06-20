@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.apache.commons.lang.StringUtils;
 import org.ca65.Asm6502Bundle;
 import org.ca65.psi.AsmElementFactory;
 import org.ca65.psi.AsmFile;
@@ -57,7 +56,7 @@ public class ConvertNumberToBinaryIntentionAction extends BaseIntentionAction {
         int remainder = currentLen % 8;
         if(remainder != 0) {
             // Pad to multiple of 8 bits
-            binString = StringUtils.leftPad(binString, (currentLen + 8) - remainder, "0");
+            binString = "0".repeat(8 - remainder) + binString;
         }
         return "%" + binString; // Prefixed with %
     }

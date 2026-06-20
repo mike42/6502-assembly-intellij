@@ -1,18 +1,28 @@
+import org.jetbrains.grammarkit.tasks.GenerateLexerTask
+import org.jetbrains.grammarkit.tasks.GenerateParserTask
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+
 plugins {
     id 'java'
-    id "org.jetbrains.intellij" version "1.1.3"
-    id "org.jetbrains.grammarkit" version "2021.1.3"
+    id 'org.jetbrains.intellij.platform' version '2.2.1'
+    id 'org.jetbrains.grammarkit' version '2022.3.2.2'
 }
 
-apply plugin: 'org.jetbrains.grammarkit'
-import org.jetbrains.grammarkit.tasks.*
-
 group 'org.ca65'
-version '1.7'
-sourceCompatibility = 11
+version '1.8'
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
+}
+
+java {
+    // Platform 2024.2 (build 242) targets Java 21.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 sourceSets {
@@ -24,69 +34,67 @@ sourceSets {
 }
 
 dependencies {
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    intellijPlatform {
+        intellijIdeaCommunity '2024.2'
+        pluginVerifier()
+        zipSigner()
+    }
+    testImplementation 'junit:junit:4.13.2'
 }
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
-intellij {
-    version = '2021.3'
-    updateSinceUntilBuild = false
+// See https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
+intellijPlatform {
+    pluginConfiguration {
+        version = project.version
+        ideaVersion {
+            sinceBuild = '242'
+            // Leave the upper bound open (equivalent to the old
+            // updateSinceUntilBuild = false), so the plugin keeps working
+            // against newer IDE builds.
+            untilBuild = provider { null }
+        }
+        changeNotes = """This is a maintenance release which updates the plugin's dependencies. The minimum IDE version is now 2024.2."""
+    }
+
+    pluginVerification {
+        // Pin explicit IDE releases to verify against (rather than the dynamic
+        // recommended() list, which can reference an IDE build that is not yet
+        // resolvable). Covers the build target and the next feature release.
+        ides {
+            ide IntelliJPlatformType.IntellijIdeaCommunity, '2024.2'
+            ide IntelliJPlatformType.IntellijIdeaCommunity, '2024.3'
+        }
+    }
+
+    // Plugin signing, driven entirely by environment variables so no secret
+    // material is stored in the repo. Run `./gradlew signPlugin` (or
+    // buildPlugin, which depends on it once these are set) with:
+    //   CERTIFICATE_CHAIN      - PEM-encoded certificate chain
+    //   PRIVATE_KEY            - PEM-encoded private key
+    //   PRIVATE_KEY_PASSWORD   - private key password (optional, if encrypted)
+    // See https://plugins.jetbrains.com/docs/intellij/plugin-signing.html
+    signing {
+        certificateChain = providers.environmentVariable('CERTIFICATE_CHAIN')
+        privateKey = providers.environmentVariable('PRIVATE_KEY')
+        password = providers.environmentVariable('PRIVATE_KEY_PASSWORD')
+    }
 }
 
-runPluginVerifier {
-    ideVersions = ['IC-2021.3.1', 'CL-2021.3.2']
-}
-
-patchPluginXml {
-    changeNotes = """This version adds a code formatter for 6502 assembly files.
-
-This release also corrects an issue where square brackets, as used in some 65C816 long addressing modes, were being treated as a syntax error.
-
-Line markers for branch instructions have been improved. 65C186 branch instructions are now recognised, and the plugin can now identify branches to unnamed labels, which are indicated with a different icon. Lastly, this version corrects a bug which prevented these line markers from appearing."""
-    sinceBuild = '211.6693'
-}
-
-runIde {
-   debugOptions {
-       enabled = true
-       port = 5005
-       server = true
-       suspend = false
-   }
-}
-
-task generateAsmParser(type: GenerateParser) {
-    // source bnf file
-    source = "src/main/java/org/ca65/Asm.bnf"
-
-    // optional, task-specific root for the generated files. Default: none
-    targetRoot = 'src/main/gen'
-
-    // path to a parser file, relative to the targetRoot
-    pathToParser = '/org/ca65/AsmParser.java'
-
-    // path to a directory with generated psi files, relative to the targetRoot
-    pathToPsiRoot = '/org/ca65/psi'
-
-    // if set, plugin will remove a parser output file and psi output directory before generating new ones. Default: false
+tasks.register('generateAsmParser', GenerateParserTask) {
+    sourceFile = file('src/main/java/org/ca65/Asm.bnf')
+    targetRootOutputDir = file('src/main/gen')
+    pathToParser = 'org/ca65/AsmParser.java'
+    pathToPsiRoot = 'org/ca65/psi'
     purgeOldFiles = true
 }
 
-task generateAsmLexer(type: GenerateLexer) {
-    // source flex file
-    source = "src/main/java/org/ca65/Asm.flex"
-
-    // target directory for lexer
-    targetDir = "src/main/gen/org/ca65"
-
-    // target classname, target file will be targetDir/targetClass.java
-    targetClass = "AsmLexer"
-
-    // optional, path to the task-specific skeleton file. Default: none
-    // skeleton = '/some/specific/skeleton'
-
-    // if set, plugin will remove a lexer output file before generating new one. Default: false
+tasks.register('generateAsmLexer', GenerateLexerTask) {
+    sourceFile = file('src/main/java/org/ca65/Asm.flex')
+    targetOutputDir = file('src/main/gen/org/ca65')
     purgeOldFiles = true
 }
 
-// defaultTasks 'clean' generateAsmLexer generateAsmParser
+// Make sure generated sources exist before the Java compiler runs.
+tasks.named('compileJava') {
+    dependsOn 'generateAsmLexer', 'generateAsmParser'
+}

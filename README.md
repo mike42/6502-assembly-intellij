@@ -22,7 +22,7 @@ This plugin may be installed via the [JetBrains Marketplace](https://plugins.jet
 
 ## License
 
-This plugin is copyright 2021-2022 Michael Billington, and may be used, distributed and modified under the terms of the MIT license. See [LICENSE](https://github.com/mike42/6502-assembly-intellij/blob/master/LICENSE) for details.
+This plugin is copyright 2021-2026 Michael Billington, and may be used, distributed and modified under the terms of the MIT license. See [LICENSE](https://github.com/mike42/6502-assembly-intellij/blob/master/LICENSE) for details.
 
 The parser/lexer were built with reference to the [ca65 assembler](https://github.com/cc65/cc65) source code (zlib License), while the icons are derived from those bundled with [JetBrains/intellij-community](https://github.com/JetBrains/intellij-community) (Apache License).
 

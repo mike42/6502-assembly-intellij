@@ -6,7 +6,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
-import org.apache.commons.lang.StringUtils;
 import org.ca65.Asm6502Bundle;
 import org.ca65.action.IntentionActionUtil;
 import org.ca65.action.PadNumberIntentionAction;
@@ -33,12 +32,11 @@ public class AsmNumericLiteralAnnotator implements Annotator {
     }
 
     private void annotateBinary(PsiElement element, AnnotationHolder holder, String binString) {
-        int len = binString.length();
         int remainder = binString.length() % 8;
         if(remainder == 0) {
             return;
         }
-        String suggestedReplacement = "%" + StringUtils.leftPad(binString, (len + 8) - remainder, "0");
+        String suggestedReplacement = "%" + "0".repeat(8 - remainder) + binString;
         holder.newAnnotation(HighlightSeverity.WEAK_WARNING, Asm6502Bundle.message("INSPECT.binary.literal.length", element.getText()))
                 .range(element.getTextRange())
                 .highlightType(ProblemHighlightType.WEAK_WARNING)
