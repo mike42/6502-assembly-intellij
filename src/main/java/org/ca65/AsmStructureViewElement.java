@@ -7,8 +7,10 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.ca65.psi.AsmDefineConstantNumeric;
 import org.ca65.psi.AsmFile;
 import org.ca65.psi.AsmMarker;
+import org.ca65.psi.impl.AsmDefineConstantNumericImpl;
 import org.ca65.psi.impl.AsmMarkerImpl;
 import org.ca65.psi.impl.AsmPsiImplUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +41,8 @@ public class AsmStructureViewElement implements StructureViewTreeElement, Sortab
         if (this.element instanceof AsmMarker) {
             // Not sure why this.element.getPresentation() is always null for this?
             return AsmPsiImplUtil.getPresentation((AsmMarker)this.element);
+        } else if (this.element instanceof AsmDefineConstantNumeric) {
+            return AsmPsiImplUtil.getPresentation((AsmDefineConstantNumeric)this.element);
         }
         ItemPresentation presentation = this.element.getPresentation();
         return presentation != null ? presentation : new PresentationData();
@@ -47,16 +51,17 @@ public class AsmStructureViewElement implements StructureViewTreeElement, Sortab
     @Override
     public TreeElement @NotNull [] getChildren() {
         if (this.element instanceof AsmFile) {
-            List<AsmMarker> markers = PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmMarker.class);
-            List<TreeElement> treeElements = new ArrayList<>(markers.size());
-            for (AsmMarker marker : markers) {
+            List<TreeElement> treeElements = new ArrayList<>();
+            for (AsmMarker marker : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmMarker.class)) {
                 AsmMarkerImpl markerImpl = (AsmMarkerImpl) marker;
-                if(markerImpl.getText().startsWith(":")) {
+                if (markerImpl.getText().startsWith(":")) {
                     // exclude blank labels
                     continue;
                 }
                 treeElements.add(new AsmStructureViewElement(markerImpl));
-
+            }
+            for (AsmDefineConstantNumeric constant : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmDefineConstantNumeric.class)) {
+                treeElements.add(new AsmStructureViewElement((AsmDefineConstantNumericImpl) constant));
             }
             return treeElements.toArray(new TreeElement[0]);
         }

@@ -6,6 +6,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import org.ca65.AsmIcons;
 import org.ca65.psi.*;
+import org.ca65.psi.AsmDefineConstantNumeric;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -100,6 +101,28 @@ public class AsmPsiImplUtil {
             @Override
             public Icon getIcon(boolean unused) {
                 return element.getText().startsWith("@") || element.getText().startsWith(":") ? AllIcons.Nodes.Annotationtype : AsmIcons.LABEL;
+            }
+        };
+    }
+
+    public static ItemPresentation getPresentation(AsmDefineConstantNumeric element) {
+        return new ItemPresentation() {
+            @Nullable
+            @Override
+            public String getPresentableText() {
+                return element.getIdentifierdef().getName();
+            }
+
+            @Nullable
+            @Override
+            public String getLocationString() {
+                return element.getContainingFile().getName();
+            }
+
+            @Nullable
+            @Override
+            public Icon getIcon(boolean unused) {
+                return AsmIcons.NUMERIC_CONST;
             }
         };
     }
