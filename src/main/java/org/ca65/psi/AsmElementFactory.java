@@ -1,7 +1,6 @@
 package org.ca65.psi;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import org.ca65.AsmFileType;
 import org.ca65.psi.impl.AsmLocalLabelRef;
@@ -39,9 +38,9 @@ public class AsmElementFactory {
         return (AsmIdentifierdef) file.getFirstChild().getFirstChild().getNextSibling().getNextSibling();
     }
 
-    public static PsiElement createNumericLiteral(Project project, String newLiteral) {
-        String text = "lda " + newLiteral;
+    public static AsmNumericLiteral createNumericLiteral(Project project, String newLiteral) {
+        String text = "lda " + newLiteral + "\n";
         final AsmFile file = createFile(project, text);
-        return file.getFirstChild().getNextSibling().getNextSibling();
+        return (AsmNumericLiteral) file.getFirstChild().getFirstChild().getNextSibling().getNextSibling().getFirstChild().getFirstChild();
     }
 }
