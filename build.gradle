@@ -9,7 +9,7 @@ plugins {
 }
 
 group 'org.ca65'
-version '1.8'
+version '1.9'
 
 repositories {
     mavenCentral()
@@ -53,7 +53,7 @@ intellijPlatform {
             // against newer IDE builds.
             untilBuild = provider { null }
         }
-        changeNotes = """This is a maintenance release which updates the plugin's dependencies. The minimum IDE version is now 2024.2."""
+        changeNotes = """This release adds CLion support. The plugin's file type was renamed to avoid a name clash with CLion's bundled assembly support."""
     }
 
     pluginVerification {
@@ -63,6 +63,8 @@ intellijPlatform {
         ides {
             ide IntelliJPlatformType.IntellijIdeaCommunity, '2024.2'
             ide IntelliJPlatformType.IntellijIdeaCommunity, '2024.3'
+            // CLion is now a supported target
+            ide IntelliJPlatformType.CLion, '2024.2'
         }
     }
 
