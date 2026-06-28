@@ -17,6 +17,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="6502 Assembly" implementationClass="org.ca65.AsmFileType" fieldName="INSTANCE"
               language="6502 Assembly" extensions="s;asm;inc;mac"/>
+    <fileType name="ld65 Config" implementationClass="org.ca65.ld65.Ld65FileType" fieldName="INSTANCE"
+              language="ld65 Config" extensions="cfg"/>
+    <lang.parserDefinition language="ld65 Config"
+                           implementationClass="org.ca65.ld65.Ld65ParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="ld65 Config"
+                                   implementationClass="org.ca65.ld65.Ld65SyntaxHighlighterFactory"/>
     <lang.parserDefinition language="6502 Assembly"
                            implementationClass="org.ca65.AsmParserDefinition"/>
     <lang.syntaxHighlighterFactory language="6502 Assembly"
