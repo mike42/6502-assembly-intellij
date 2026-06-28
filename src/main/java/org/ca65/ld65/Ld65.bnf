@@ -34,7 +34,7 @@ entry ::= entryName COLON attrList SEMICOLON
 // Entry names may be bare identifiers, quoted strings (%O), or format specifiers (%O/%S)
 private entryName ::= IDENTIFIER | STRING_LITERAL | FORMAT_SPEC
 
-private attrList ::= (attribute (COMMA attribute)*)?
+private attrList ::= (attribute (COMMA? attribute)*)?
 
 // Key = value attribute pair
 attribute ::= IDENTIFIER EQUALS attrValue
