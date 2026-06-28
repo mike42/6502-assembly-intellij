@@ -33,4 +33,5 @@ I'm aware of these other plugins, which are for different assemblers.
 - [4ch1m/kick-assembler-acbg](https://github.com/4ch1m/kick-assembler-acbg) - Kick Assembler
 - [67726e/IntelliJ-6502](https://github.com/67726e/IntelliJ-6502) - NESASM
 - [matozoid/Intellij6502](https://github.com/matozoid/Intellij6502) - 64tass
+- [chrisly42/mc68000-asm-plugin](https://git.platon42.de/chrisly42/mc68000-asm-plugin) - targets Motorola 68000 (VASM)
 

@@ -15,7 +15,7 @@ public class AsmFileType extends LanguageFileType {
     @NotNull
     @Override
     public String getName() {
-        return "Assembly file";
+        return "6502 Assembly";
     }
 
     @Override
