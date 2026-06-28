@@ -1,5 +1,10 @@
 # 6502 Assembly Plugin for IntelliJ
 
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/mike42/6502-assembly-intellij/build.yml?branch=main&style=flat-square)](https://github.com/mike42/6502-assembly-intellij/actions/workflows/build.yml)
+[![JetBrains Plugin Version](https://img.shields.io/jetbrains/plugin/v/16799?style=flat-square)](https://plugins.jetbrains.com/plugin/16799-6502-assembly)
+[![JetBrains Plugin Downloads](https://img.shields.io/jetbrains/plugin/d/16799?style=flat-square)](https://plugins.jetbrains.com/plugin/16799-6502-assembly)
+[![JetBrains Plugin Rating](https://img.shields.io/jetbrains/plugin/r/rating/16799?style=flat-square)](https://plugins.jetbrains.com/plugin/16799-6502-assembly/reviews)
+
 This is plugin for JetBrains IDE's, which provides basic support for 6502 assembly language. It is suitable for projects which use the `ca65` assembler to target the WDC 6502, 65C816, and related microprocessors.
 
 ![6502 Example in IntelliJ](screenshot/6502_intellij_example.png)
