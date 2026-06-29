@@ -47,6 +47,13 @@
     <projectService serviceImplementation="org.ca65.config.AsmConfiguration" />
     <lang.documentationProvider language="6502 Assembly" implementationClass="org.ca65.AsmDocumentationProvider"/>
     <psi.referenceContributor language="6502 Assembly" implementation="org.ca65.AsmIncludeReferenceContributor"/>
+    <codeInsight.declarativeInlayProvider language="6502 Assembly"
+                                         implementationClass="org.ca65.AsmEnumValueInlayHintProvider"
+                                         providerId="ca65.enumValues"
+                                         group="VALUES_GROUP"
+                                         isEnabledByDefault="true"
+                                         bundle="messages.Asm6502Bundle"
+                                         nameKey="INLAY.enum.values.name"/>
 
     <intentionAction>
       <className>org.ca65.action.ConvertNumberToHexadecimalIntentionAction</className>

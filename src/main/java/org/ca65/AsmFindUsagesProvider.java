@@ -4,11 +4,11 @@ import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
-import org.ca65.psi.AsmIdentifierdef;
-import org.ca65.psi.AsmMarker;
-import org.ca65.psi.AsmTypes;
+import org.ca65.psi.*;
 import org.ca65.psi.impl.AsmPsiImplUtil;
+import org.ca65.psi.impl.AsmStructMemberMixin;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,13 +25,13 @@ public class AsmFindUsagesProvider implements FindUsagesProvider {
 
     @Override
     public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-        if(psiElement instanceof AsmMarker) {
-            return true;
-        }
-        if(psiElement instanceof AsmIdentifierdef) {
-            return true;
-        }
-        return false;
+        return psiElement instanceof AsmMarker
+                || psiElement instanceof AsmIdentifierdef
+                || psiElement instanceof AsmEnumDef
+                || psiElement instanceof AsmEnumMember
+                || psiElement instanceof AsmStructDef
+                || psiElement instanceof AsmUnionDef
+                || psiElement instanceof AsmStructMember;
     }
 
     @Override
@@ -42,19 +42,24 @@ public class AsmFindUsagesProvider implements FindUsagesProvider {
 
     @Override
     public @Nls @NotNull String getType(@NotNull PsiElement element) {
-        if(element instanceof AsmMarker) {
-            return "label";
-        }
+        if (element instanceof AsmMarker) return "label";
+        if (element instanceof AsmEnumDef) return "enum";
+        if (element instanceof AsmEnumMember) return "enum member";
+        if (element instanceof AsmStructDef) return "struct";
+        if (element instanceof AsmUnionDef) return "union";
+        if (element instanceof AsmStructMember) return "struct member";
         return "identifier";
     }
 
     @Override
     public @Nls @NotNull String getDescriptiveName(@NotNull PsiElement element) {
-        if(element instanceof AsmMarker) {
-            return AsmPsiImplUtil.getName((AsmMarker) element);
-        }
-        if(element instanceof AsmIdentifierdef) {
-            return AsmPsiImplUtil.getName((AsmIdentifierdef) element);
+        if (element instanceof AsmMarker m) return AsmPsiImplUtil.getName(m);
+        if (element instanceof AsmIdentifierdef id) return AsmPsiImplUtil.getName(id);
+        if (element instanceof AsmEnumDef || element instanceof AsmEnumMember
+                || element instanceof AsmStructDef || element instanceof AsmUnionDef
+                || element instanceof AsmStructMember) {
+            String name = ((PsiNamedElement) element).getName();
+            return name != null ? name : "(anonymous)";
         }
         return element.getText();
     }

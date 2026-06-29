@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.ca65.psi.*;
 import org.ca65.psi.impl.AsmPsiImplUtil;
+import org.ca65.psi.impl.AsmStructMemberMixin;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,6 +81,105 @@ public class AsmUtil {
                 AsmIdentifierdef identifierDef = labelConstant.getIdentifierdef();
                 if (identifier.equals(AsmPsiImplUtil.getLabelName(identifierDef))) {
                     return identifierDef;
+                }
+            }
+        }
+        // enum names and (for unnamed enums) their members
+        AsmEnumDef[] enumDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmEnumDef.class);
+        if (enumDefs != null) {
+            for (AsmEnumDef enumDef : enumDefs) {
+                AsmIdentifierdef nameDef = enumDef.getIdentifierdef();
+                if (nameDef != null && identifier.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    return nameDef;
+                }
+                // unnamed enum members spill into the enclosing scope
+                if (nameDef == null) {
+                    for (AsmEnumMember member : enumDef.getEnumMemberList()) {
+                        AsmIdentifierdef memberDef = member.getIdentifierdef();
+                        if (identifier.equals(AsmPsiImplUtil.getLabelName(memberDef))) {
+                            return memberDef;
+                        }
+                    }
+                }
+            }
+        }
+        // struct and union names
+        AsmStructDef[] structDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmStructDef.class);
+        if (structDefs != null) {
+            for (AsmStructDef structDef : structDefs) {
+                AsmIdentifierdef nameDef = structDef.getIdentifierdef();
+                if (nameDef != null && identifier.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    return nameDef;
+                }
+            }
+        }
+        AsmUnionDef[] unionDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmUnionDef.class);
+        if (unionDefs != null) {
+            for (AsmUnionDef unionDef : unionDefs) {
+                AsmIdentifierdef nameDef = unionDef.getIdentifierdef();
+                if (nameDef != null && identifier.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    return nameDef;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolve a scoped member reference: given a struct/union/enum name and a member name,
+     * return the PSI element for the member definition, searching the include graph.
+     */
+    public static PsiNamedElement findScopedMember(AsmFile asmFile, String scopeName, String memberName) {
+        if (asmFile == null || scopeName == null || memberName == null) return null;
+        PsiNamedElement local = findScopedMemberInFile(asmFile, scopeName, memberName);
+        if (local != null) return local;
+        for (AsmFile included : AsmIncludeUtil.getIncludedFiles(asmFile)) {
+            PsiNamedElement def = findScopedMemberInFile(included, scopeName, memberName);
+            if (def != null) return def;
+        }
+        return null;
+    }
+
+    private static PsiNamedElement findScopedMemberInFile(AsmFile asmFile, String scopeName, String memberName) {
+        // struct members
+        AsmStructDef[] structDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmStructDef.class);
+        if (structDefs != null) {
+            for (AsmStructDef structDef : structDefs) {
+                AsmIdentifierdef nameDef = structDef.getIdentifierdef();
+                if (nameDef != null && scopeName.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    for (AsmStructMember member : structDef.getStructMemberList()) {
+                        if (memberName.equals(((AsmStructMemberMixin) member).getName())) {
+                            return (PsiNamedElement) member;
+                        }
+                    }
+                }
+            }
+        }
+        // union members
+        AsmUnionDef[] unionDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmUnionDef.class);
+        if (unionDefs != null) {
+            for (AsmUnionDef unionDef : unionDefs) {
+                AsmIdentifierdef nameDef = unionDef.getIdentifierdef();
+                if (nameDef != null && scopeName.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    for (AsmStructMember member : unionDef.getStructMemberList()) {
+                        if (memberName.equals(((AsmStructMemberMixin) member).getName())) {
+                            return (PsiNamedElement) member;
+                        }
+                    }
+                }
+            }
+        }
+        // enum members for named enums
+        AsmEnumDef[] enumDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmEnumDef.class);
+        if (enumDefs != null) {
+            for (AsmEnumDef enumDef : enumDefs) {
+                AsmIdentifierdef nameDef = enumDef.getIdentifierdef();
+                if (nameDef != null && scopeName.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    for (AsmEnumMember member : enumDef.getEnumMemberList()) {
+                        if (memberName.equals(AsmPsiImplUtil.getLabelName(member.getIdentifierdef()))) {
+                            return member.getIdentifierdef();
+                        }
+                    }
                 }
             }
         }

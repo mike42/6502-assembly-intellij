@@ -68,21 +68,48 @@ public final class NumericLiteralValue {
 
     /** Renders as ca65 hex: {@code $xx}, always an even number of digits, lowercase. */
     public @NotNull String toHex() {
+        return formatHex(value);
+    }
+
+    /** Renders as plain decimal. */
+    public @NotNull String toDecimal() {
+        return formatDecimal(value);
+    }
+
+    /** Renders as ca65 binary: {@code %xxxxxxxx}, always a multiple of 8 digits. */
+    public @NotNull String toBinary() {
+        return formatBinary(value);
+    }
+
+    /** Renders {@code value} as ca65 hex: {@code $xx}, always an even number of digits, lowercase. */
+    public static @NotNull String formatHex(int value) {
         String raw = Integer.toHexString(value);
         if (raw.length() % 2 == 1) raw = "0" + raw;
         return "$" + raw;
     }
 
-    /** Renders as plain decimal. */
-    public @NotNull String toDecimal() {
+    /** Renders {@code value} as plain decimal. */
+    public static @NotNull String formatDecimal(int value) {
         return Integer.toString(value);
     }
 
-    /** Renders as ca65 binary: {@code %xxxxxxxx}, always a multiple of 8 digits. */
-    public @NotNull String toBinary() {
+    /** Renders {@code value} as ca65 binary: {@code %xxxxxxxx}, always a multiple of 8 digits. */
+    public static @NotNull String formatBinary(int value) {
         String raw = Integer.toBinaryString(value);
         int remainder = raw.length() % 8;
         if (remainder != 0) raw = "0".repeat(8 - remainder) + raw;
         return "%" + raw;
+    }
+
+    /**
+     * Renders {@code value} using the source form {@code rep}. Hex is always idiomatic lowercase
+     * {@code $xx} (the non-idiomatic {@code ZILOG_HEX} form is normalised to it).
+     */
+    public static @NotNull String format(int value, @NotNull Representation rep) {
+        return switch (rep) {
+            case DECIMAL -> formatDecimal(value);
+            case BINARY -> formatBinary(value);
+            case HEX, ZILOG_HEX -> formatHex(value);
+        };
     }
 }

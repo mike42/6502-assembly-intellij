@@ -11,6 +11,7 @@ import org.ca65.Asm6502Bundle;
 import org.ca65.action.DisableProjectReferenceCheckingIntentionAction;
 import org.ca65.config.AsmConfiguration;
 import org.ca65.psi.AsmDotexpr;
+import org.ca65.psi.AsmIdentifierdef;
 import org.ca65.psi.impl.AsmIdentifierrImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,9 @@ public class AsmUnresolvedReferenceAnnotator implements Annotator {
         }
         if (!(element instanceof AsmIdentifierrImpl)) {
             return;
+        }
+        if (element.getParent() instanceof AsmIdentifierdef) {
+            return; // this is a symbol definition, not a reference
         }
         if (isInMacroDef(element)) {
             // Identifiers used in macros are not correct

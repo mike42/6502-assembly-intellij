@@ -6,7 +6,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import org.ca65.AsmIcons;
 import org.ca65.psi.*;
-import org.ca65.psi.AsmDefineConstantNumeric;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -110,7 +109,8 @@ public class AsmPsiImplUtil {
             @Nullable
             @Override
             public String getPresentableText() {
-                return element.getIdentifierdef().getName();
+                String name = element.getIdentifierdef().getName();
+                return name;
             }
 
             @Nullable
@@ -127,8 +127,32 @@ public class AsmPsiImplUtil {
         };
     }
 
+    public static ItemPresentation getPresentation(AsmDefineConstantLabel element) {
+        return new ItemPresentation() {
+            @Nullable
+            @Override
+            public String getPresentableText() {
+                String name = element.getIdentifierdef().getName();
+                return name;
+            }
+
+            @Nullable
+            @Override
+            public String getLocationString() {
+                return element.getContainingFile().getName();
+            }
+
+            @Nullable
+            @Override
+            public Icon getIcon(boolean unused) {
+                return AsmIcons.LABEL;
+            }
+        };
+    }
+
     public static String getName(AsmIdentifierr asmIdentifierr) {
         ASTNode keyNode = asmIdentifierr.getNode().findChildByType(AsmTypes.IDENTIFIER);
+        if (keyNode == null) keyNode = asmIdentifierr.getNode().findChildByType(AsmTypes.MNEMONIC);
         if (keyNode != null) {
             return keyNode.getText().replaceAll("\\\\ ", " ");
         } else {
