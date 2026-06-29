@@ -16,9 +16,13 @@ implements("marker")="com.intellij.psi.PsiNamedElement"
 implements("identifierdef")="com.intellij.psi.PsiNamedElement"
 }
 
-asmFile ::= item_*
+
+asmFile ::= item_* last_line?
 
 private item_ ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|macro|llabel|star_assign)? COMMENT? EOL_WS
+
+// repeat of above, to handle files that do not end with a newline
+private last_line ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|macro|llabel|star_assign)? COMMENT?
 
 marker ::= (LABEL | SHORTLABEL) {
     mixin="org.ca65.psi.impl.AsmLabelDefinitionImpl"
