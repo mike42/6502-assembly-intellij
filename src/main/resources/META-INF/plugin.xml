@@ -46,6 +46,7 @@
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmShortLabelRefAnnotator"/>
     <projectService serviceImplementation="org.ca65.config.AsmConfiguration" />
     <lang.documentationProvider language="6502 Assembly" implementationClass="org.ca65.AsmDocumentationProvider"/>
+    <psi.referenceContributor language="6502 Assembly" implementation="org.ca65.AsmIncludeReferenceContributor"/>
 
     <intentionAction>
       <className>org.ca65.action.ConvertNumberToHexadecimalIntentionAction</className>

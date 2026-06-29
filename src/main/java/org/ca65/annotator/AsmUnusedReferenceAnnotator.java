@@ -11,8 +11,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Query;
 import org.ca65.Asm6502Bundle;
+import org.ca65.AsmIncludeUtil;
 import org.ca65.action.DisableProjectReferenceCheckingIntentionAction;
 import org.ca65.config.AsmConfiguration;
+import org.ca65.psi.AsmFile;
 import org.ca65.psi.AsmLabelDefinition;
 import org.ca65.psi.impl.AsmIdentifierDefinitionImpl;
 import org.ca65.psi.impl.AsmLabelDefinitionImpl;
@@ -45,7 +47,7 @@ public class AsmUnusedReferenceAnnotator implements Annotator {
     }
 
     private boolean isReferenced(PsiNameIdentifierOwner element) {
-        final Query<PsiReference> refs = ReferencesSearch.search(element, GlobalSearchScope.fileScope(element.getContainingFile()), false);
+        final Query<PsiReference> refs = ReferencesSearch.search(element, referenceScope(element), false);
         if (element instanceof AsmLabelDefinitionImpl) {
             // Simple case
             PsiReference firstReference = refs.findFirst();
@@ -53,10 +55,23 @@ public class AsmUnusedReferenceAnnotator implements Annotator {
         }
         // These turn up references to themselves, using text range to skip.
         for (PsiReference ref : refs) {
-            if (!ref.getAbsoluteRange().equals(element.getTextRange())) {
+            if (ref.getElement().getContainingFile() != element.getContainingFile()
+                    || !ref.getAbsoluteRange().equals(element.getTextRange())) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * A definition is "used" if anything references it across the include graph: the file itself plus
+     * every file that transitively includes it. Symbols defined in an include are typically only used
+     * by the includer, so a plain file scope would flag them all as unused.
+     */
+    private GlobalSearchScope referenceScope(PsiNameIdentifierOwner element) {
+        if (element.getContainingFile() instanceof AsmFile asmFile) {
+            return AsmIncludeUtil.getIncluderScope(asmFile);
+        }
+        return GlobalSearchScope.fileScope(element.getContainingFile());
     }
 }

@@ -16,7 +16,30 @@ import java.util.Collections;
 import java.util.List;
 
 public class AsmUtil {
+    /**
+     * Find the definition of {@code identifier} visible from {@code asmFile}, following the
+     * {@code .include} graph. The current file is searched first, then each transitively included
+     * file (a symbol defined in an include is visible to the includer).
+     */
     public static PsiNamedElement findDefinition(AsmFile asmFile, String identifier) {
+        if (asmFile == null || identifier == null) {
+            return null;
+        }
+        PsiNamedElement local = findDefinitionInFile(asmFile, identifier);
+        if (local != null) {
+            return local;
+        }
+        for (AsmFile included : AsmIncludeUtil.getIncludedFiles(asmFile)) {
+            PsiNamedElement definition = findDefinitionInFile(included, identifier);
+            if (definition != null) {
+                return definition;
+            }
+        }
+        return null;
+    }
+
+    /** Find a definition of {@code identifier} declared directly within {@code asmFile}. */
+    public static PsiNamedElement findDefinitionInFile(AsmFile asmFile, String identifier) {
         if(asmFile == null) {
             return null;
         }
