@@ -19,10 +19,10 @@ implements("identifierdef")="com.intellij.psi.PsiNamedElement"
 
 asmFile ::= item_* last_line?
 
-private item_ ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|macro|llabel|star_assign)? COMMENT? EOL_WS
+private item_ ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|enum_def|struct_def|union_def|macro|llabel|star_assign)? COMMENT? EOL_WS
 
 // repeat of above, to handle files that do not end with a newline
-private last_line ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|macro|llabel|star_assign)? COMMENT?
+private last_line ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|enum_def|struct_def|union_def|macro|llabel|star_assign)? COMMENT?
 
 marker ::= (LABEL | SHORTLABEL) {
     mixin="org.ca65.psi.impl.AsmLabelDefinitionImpl"
@@ -45,6 +45,46 @@ define_constant_numeric ::= identifierdef ( EQUALS ) expr
 define_constant_label ::= identifierdef ( COLON_EQUALS ) expr
 star_assign ::= MUL EQUALS expr
 
+// .enum NAME / .endenum blocks
+enum_def ::= ENUM_KEYWORD identifierdef? COMMENT? EOL_WS enum_body ENDENUM_KEYWORD {
+    mixin="org.ca65.psi.impl.AsmEnumDefMixin"
+    methods=[getName getPresentation getNameIdentifier setName getEnumMemberList]
+}
+
+private enum_body ::= enum_body_line*
+
+private enum_body_line ::= enum_member COMMENT? EOL_WS
+                          | COMMENT? EOL_WS
+
+enum_member ::= identifierdef (EQUALS expr)? {
+    mixin="org.ca65.psi.impl.AsmEnumMemberMixin"
+    methods=[getName getPresentation getNameIdentifier setName getComputedValue]
+}
+
+// .struct NAME / .endstruct and .union NAME / .endunion blocks
+struct_def ::= STRUCT_KEYWORD identifierdef? COMMENT? EOL_WS struct_body ENDSTRUCT_KEYWORD {
+    mixin="org.ca65.psi.impl.AsmStructDefMixin"
+    methods=[getName getPresentation getNameIdentifier setName getStructMemberList]
+}
+
+union_def ::= UNION_KEYWORD identifierdef? COMMENT? EOL_WS struct_body ENDUNION_KEYWORD {
+    mixin="org.ca65.psi.impl.AsmStructDefMixin"
+    methods=[getName getPresentation getNameIdentifier setName getStructMemberList]
+}
+
+private struct_body ::= struct_body_line*
+
+private struct_body_line ::= struct_member COMMENT? EOL_WS
+                            | DOT_KEYWORD expr? COMMENT? EOL_WS
+                            | STRUCT_KEYWORD IDENTIFIER? COMMENT? EOL_WS struct_body ENDSTRUCT_KEYWORD COMMENT? EOL_WS
+                            | UNION_KEYWORD IDENTIFIER? COMMENT? EOL_WS struct_body ENDUNION_KEYWORD COMMENT? EOL_WS
+                            | COMMENT? EOL_WS
+
+struct_member ::= IDENTIFIER DOT_KEYWORD expr? {
+    mixin="org.ca65.psi.impl.AsmStructMemberMixin"
+    methods=[getName getPresentation getNameIdentifier setName]
+}
+
 expr ::= anything*
 
 anything ::= (instruction_mnemonic|numeric_literal|STRING_LITERAL|DOT_KEYWORD|REGISTER_DOT_KEYWORD|identifierr|LABEL|EQUALS|COLON_EQUALS|COMMA|REGISTER|CHAR_LITERAL|LPAREN|RPAREN|LSQUAREBRACKET|RSQUAREBRACKET|OR|LSHIFT|RSHIFT|AND|CONSTEXPR|SHORTLABEL_REF|local_label_rref|SHORTLABEL|HIBYTE|LOBYTE|BOOLOR|BOOLAND|NOT|DIV|MUL|ADD|SUB|XOR|SCOPE_ACCESS|LE|GE|NE|BOOLNOT|LCURLY|RCURLY)
@@ -52,7 +92,7 @@ anything ::= (instruction_mnemonic|numeric_literal|STRING_LITERAL|DOT_KEYWORD|RE
 numeric_literal ::= INT_LITERAL
 instruction_mnemonic ::= MNEMONIC
 
-identifierr ::= IDENTIFIER {
+identifierr ::= IDENTIFIER | MNEMONIC {
     mixin="org.ca65.psi.impl.AsmIdentifierImpl"
     methods=[getName]
 }
@@ -63,4 +103,4 @@ local_label_rref ::= LOCAL_LABEL_REF {
 }
 
 // Just to define the symbols
-also ::= (LINE_WS|EOL_WS)
+also ::= (LINE_WS|EOL_WS|ENUM_KEYWORD|ENDENUM_KEYWORD|STRUCT_KEYWORD|ENDSTRUCT_KEYWORD|UNION_KEYWORD|ENDUNION_KEYWORD)

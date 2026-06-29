@@ -65,8 +65,8 @@ REGISTER = (X | Y)
 DOT_KEYWORD = "\." ( ADDR | ADDRSIZE | ALIGN | AND | ASCIIZ | ASIZE | ASSERT | AUTOIMPORT | BANK | BANKBYTE
                 | BANKBYTES | BITAND | BITNOT | BITOR | BITXOR | BLANK | BSS | BYT | BYTE | CASE | CHARMAP | CODE
                 | CONCAT | CONDES | CONST | CONSTRUCTOR | CPU | DATA | DBG | DBYT | DEBUGINFO | DEF | DEFINE | DEFINED
-                | DEFINEDMACRO | DELMAC | DELMACRO | DESTRUCTOR | DWORD | ELSE | ELSEIF | END | ENDENUM | ENDIF
-                | ENDMAC | ENDMACRO | ENDPROC | ENDREP | ENDREPEAT | ENDSCOPE | ENDSTRUCT | ENDUNION | ENUM | ERROR
+                | DEFINEDMACRO | DELMAC | DELMACRO | DESTRUCTOR | DWORD | ELSE | ELSEIF | END | ENDIF
+                | ENDMAC | ENDMACRO | ENDPROC | ENDREP | ENDREPEAT | ENDSCOPE | ERROR
                 | EXITMAC | EXITMACRO | EXPORT | EXPORTZP | FARADDR | FATAL | FEATURE | FILEOPT | FOPT | FORCEIMPORT
                 | FORCEWORD | GLOBAL | GLOBALZP | HIBYTE | HIBYTES | HIWORD | IDENT | IF | IFBLANK | IFCONST
                 | IFDEF | IFNBLANK | IFNCONST | IFNDEF | IFNREF | IFP02 | IFP4510 | IFP816 | IFPC02 | IFPDTV | IFPSC02
@@ -75,12 +75,19 @@ DOT_KEYWORD = "\." ( ADDR | ADDRSIZE | ALIGN | AND | ASCIIZ | ASIZE | ASSERT | A
                 | MACRO | MATCH | MAX | MID | MIN | MOD | NOT | NULL | OR | ORG | OUT | P02 | P4510 | P816 | PAGELEN
                 | PAGELENGTH | PARAMCOUNT | PC02 | PDTV | POPCHARMAP | POPCPU | POPSEG | PROC | PSC02 | PUSHCHARMAP
                 | PUSHCPU | PUSHSEG | REF | REFERENCED | RELOC | REPEAT | RES | RIGHT | RODATA | SCOPE | SEGMENT | SET
-                | SETCPU | SHL | SHR | SIZEOF | SMART | SPRINTF | STRAT | STRING | STRLEN | STRUCT | TAG | TCOUNT
-                | TIME | UNDEF | UNDEFINE | UNION | VERSION | WARNING | WORD | XMATCH | XOR | ZEROPAGE )
+                | SETCPU | SHL | SHR | SIZEOF | SMART | SPRINTF | STRAT | STRING | STRLEN | TAG | TCOUNT
+                | TIME | UNDEF | UNDEFINE | VERSION | WARNING | WORD | XMATCH | XOR | ZEROPAGE )
 
 REGISTER_DOT_KEYWORD = "\." ( A16 | A8 | I16 | I8 )
 
 IMPORT_KEYWORD = "\." (IMPORT  | IMPORTZP)
+
+ENUM_KEYWORD      = "\." ENUM
+ENDENUM_KEYWORD   = "\." ENDENUM
+STRUCT_KEYWORD    = "\." STRUCT
+ENDSTRUCT_KEYWORD = "\." ENDSTRUCT
+UNION_KEYWORD     = "\." UNION
+ENDUNION_KEYWORD  = "\." ENDUNION
 
 SHORTLABEL_REF = \: (\+ | \- | \< | \>)+  // angle brackets are an accepted alias for +/-; leading ':' avoids overlap with << / >>
 LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
@@ -91,12 +98,18 @@ LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
     {EOL_WS}+                  {return EOL_WS;}
     {LINE_WS}+                 {return LINE_WS;}
     {END_OF_LINE_COMMENT}      {return COMMENT;}
-    {LABEL} / [^=]             {return LABEL;} // to avoid FOO:=0 being picked up as a label def.
+    {LABEL} / [^:=]            {return LABEL;} // avoid FOO:=0 (define_constant_label) and FOO::BAR (scope access)
     {MNEMONIC}                 {return MNEMONIC;}
     {REGISTER}                 {return REGISTER; }
     {DOT_KEYWORD}              {return DOT_KEYWORD;}
     {REGISTER_DOT_KEYWORD}     {return REGISTER_DOT_KEYWORD;}
     {IMPORT_KEYWORD}           {return IMPORT_KEYWORD;}
+    {ENUM_KEYWORD}             {return ENUM_KEYWORD;}
+    {ENDENUM_KEYWORD}          {return ENDENUM_KEYWORD;}
+    {STRUCT_KEYWORD}           {return STRUCT_KEYWORD;}
+    {ENDSTRUCT_KEYWORD}        {return ENDSTRUCT_KEYWORD;}
+    {UNION_KEYWORD}            {return UNION_KEYWORD;}
+    {ENDUNION_KEYWORD}         {return ENDUNION_KEYWORD;}
     {IDENTIFIER}               {return IDENTIFIER;}
     {INT_LITERAL}              {return INT_LITERAL;}
     {STRING_LITERAL}           {return STRING_LITERAL;}

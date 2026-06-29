@@ -5,7 +5,10 @@ import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.PsiFile;
+import org.ca65.psi.AsmEnumDef;
 import org.ca65.psi.AsmFile;
+import org.ca65.psi.AsmStructDef;
+import org.ca65.psi.AsmUnionDef;
 import org.jetbrains.annotations.NotNull;
 
 public class AsmStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
@@ -25,6 +28,11 @@ public class AsmStructureViewModel extends StructureViewModelBase implements Str
 
     @Override
     public boolean isAlwaysLeaf(StructureViewTreeElement element) {
-        return element instanceof AsmFile;
+        if (element instanceof AsmStructureViewElement sve) {
+            Object val = sve.getValue();
+            return !(val instanceof AsmFile || val instanceof AsmEnumDef
+                    || val instanceof AsmStructDef || val instanceof AsmUnionDef);
+        }
+        return true;
     }
 }
