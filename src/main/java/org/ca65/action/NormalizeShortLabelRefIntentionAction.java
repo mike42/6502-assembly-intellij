@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Replaces the angle-bracket form of an unnamed label reference (:&gt;, :&lt;)
+ * Replaces the angle-bracket form of an unnamed label reference (:>, :<)
  * with the more common :+ / :- form. Cursor-based so the platform can generate a live preview.
  */
 public class NormalizeShortLabelRefIntentionAction extends BaseIntentionAction {

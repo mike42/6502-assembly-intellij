@@ -12,7 +12,7 @@ import org.ca65.psi.AsmTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Flags unnamed label references that use angle brackets (:&gt;, :&lt;) and offers
+ * Flags unnamed label references that use angle brackets (:>, :<) and offers
  * to normalise them to the more common :+ / :- form.
  */
 public class AsmShortLabelRefAnnotator implements Annotator {
