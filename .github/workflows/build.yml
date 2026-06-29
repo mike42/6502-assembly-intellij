@@ -28,6 +28,9 @@ jobs:
       - name: Build plugin
         run: ./gradlew generateAsmLexer generateAsmParser buildPlugin
 
+      - name: Run tests
+        run: ./gradlew test
+
       - name: Verify plugin
         run: ./gradlew verifyPlugin
 

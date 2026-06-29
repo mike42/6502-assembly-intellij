@@ -34,7 +34,9 @@ identifierdef ::= identifierr {
     methods=[getLabelName getPresentation getName setName getNameIdentifier]
 }
 imports ::= IMPORT_KEYWORD identifierdef ( COMMA identifierdef )*
-dotexpr ::= DOT_KEYWORD expr
+dotexpr ::= DOT_KEYWORD expr {
+    mixin="org.ca65.psi.impl.AsmDotexprMixin"
+}
 register_dotexpr ::= REGISTER_DOT_KEYWORD
 macro ::= IDENTIFIER expr
 llabel ::=  instruction_mnemonic expr?

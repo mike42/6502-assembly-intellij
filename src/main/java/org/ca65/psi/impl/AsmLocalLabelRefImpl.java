@@ -38,7 +38,8 @@ public class AsmLocalLabelRefImpl extends ASTWrapperPsiElement implements AsmLoc
 
             @Override
             public @Nullable PsiElement resolve() {
-                return AsmUtil.findDefinition((AsmFile)getContainingFile().getContainingFile(), getName());
+                // Local labels (@foo) are scoped to a single file in ca65, so do not follow includes.
+                return AsmUtil.findDefinitionInFile((AsmFile)getContainingFile().getContainingFile(), getName());
             }
 
             @Override
