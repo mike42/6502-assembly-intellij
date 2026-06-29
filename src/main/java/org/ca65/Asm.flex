@@ -82,7 +82,7 @@ REGISTER_DOT_KEYWORD = "\." ( A16 | A8 | I16 | I8 )
 
 IMPORT_KEYWORD = "\." (IMPORT  | IMPORTZP)
 
-SHORTLABEL_REF = \: (\+ | \-)+
+SHORTLABEL_REF = \: (\+ | \- | \< | \>)+  // angle brackets are an accepted alias for +/-; leading ':' avoids overlap with << / >>
 LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
 
 %%

@@ -43,6 +43,7 @@
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmNumericLiteralAnnotator"/>
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmStarAssignAnnotator"/>
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmZilogHexAnnotator"/>
+    <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmShortLabelRefAnnotator"/>
     <projectService serviceImplementation="org.ca65.config.AsmConfiguration" />
     <lang.documentationProvider language="6502 Assembly" implementationClass="org.ca65.AsmDocumentationProvider"/>
 

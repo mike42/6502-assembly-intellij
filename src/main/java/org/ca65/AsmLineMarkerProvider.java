@@ -73,13 +73,16 @@ public class AsmLineMarkerProvider extends RelatedItemLineMarkerProvider {
         }
         String labelText = leafElement.getText().substring(1);
         int len = labelText.length();
+        // '>' is an accepted alias for '+' (forward), '<' for '-' (backward).
+        boolean allForward = labelText.chars().allMatch(c -> c == '+' || c == '>');
+        boolean allBackward = labelText.chars().allMatch(c -> c == '-' || c == '<');
         final PsiElement labelDefinition;
-        if(labelText.equals("+".repeat(len))) {
+        if(allForward) {
             labelDefinition = walkToLabel(maybeJumpInstruction.getParent(), len, true);
-        } else if (labelText.equals("-".repeat(len))) {
+        } else if (allBackward) {
             labelDefinition = walkToLabel(maybeJumpInstruction.getParent(), len, false);
         } else {
-            labelDefinition = null; // reference should be eg. :-- or :++
+            labelDefinition = null; // mixed direction, eg. :+- is not a valid reference
         }
         if(labelDefinition == null) {
             return; // Could not find
