@@ -19,9 +19,12 @@ public class AsmEnumValueInlayHintProvider implements InlayHintsProvider {
             @Override
             public void collectFromElement(@NotNull PsiElement element, @NotNull InlayTreeSink sink) {
                 if (!(element instanceof AsmEnumMember member)) return;
-                Long value = ((AsmEnumMemberMixin) member).getComputedValue();
+                // Members with an explicit value (`= ...`) need no hint; they only reset the
+                // running ordinal. Show the auto-assigned ordinal for everything else.
+                if (member.getExpr() != null) return;
+                String value = ((AsmEnumMemberMixin) member).getDisplayValue();
                 if (value == null) return;
-                String hint = "= $" + Long.toHexString(value).toUpperCase();
+                String hint = "= " + value;
                 int offset = element.getTextRange().getEndOffset();
                 sink.addPresentation(
                         new InlineInlayPosition(offset, false, 0),

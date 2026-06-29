@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.ca65.AsmIcons;
 import org.ca65.helpers.NumericLiteralValue;
@@ -53,9 +54,9 @@ public class AsmEnumMemberMixin extends ASTWrapperPsiElement implements AsmLabel
             @Override
             public @Nullable String getPresentableText() {
                 String name = getName();
-                Long value = getComputedValue();
+                String value = getDisplayValue();
                 if (name != null && value != null) {
-                    return name + " = $" + Long.toHexString(value).toUpperCase();
+                    return name + " = " + value;
                 }
                 return name;
             }
@@ -70,6 +71,36 @@ public class AsmEnumMemberMixin extends ASTWrapperPsiElement implements AsmLabel
                 return AsmIcons.ENUM_MEMBER;
             }
         };
+    }
+
+    /**
+     * This member's value formatted for display, in the representation the enum uses (lowercase
+     * padded hex by default, decimal if the enum's literals are written in decimal). Null when the
+     * value cannot be resolved.
+     */
+    @Nullable
+    public String getDisplayValue() {
+        Long value = getComputedValue();
+        if (value == null) return null;
+        return NumericLiteralValue.format(value.intValue(), enumRepresentation());
+    }
+
+    /** The numeric representation the enclosing enum is written in, taken from its first explicit literal. */
+    @NotNull
+    private NumericLiteralValue.Representation enumRepresentation() {
+        PsiElement parent = getParent();
+        if (parent instanceof AsmEnumDef enumDef) {
+            for (AsmEnumMember member : enumDef.getEnumMemberList()) {
+                AsmExpr expr = member.getExpr();
+                if (expr == null) continue;
+                AsmNumericLiteral lit = PsiTreeUtil.findChildOfType(expr, AsmNumericLiteral.class);
+                if (lit != null) {
+                    NumericLiteralValue parsed = NumericLiteralValue.parse(lit.getText());
+                    if (parsed != null) return parsed.getRepresentation();
+                }
+            }
+        }
+        return NumericLiteralValue.Representation.HEX;
     }
 
     /** Computes this member's integer value by walking the preceding siblings. Returns null for unresolvable expressions. */
@@ -107,7 +138,9 @@ public class AsmEnumMemberMixin extends ASTWrapperPsiElement implements AsmLabel
 
     @Nullable
     private static Long parseSimpleExpr(AsmExpr expr) {
-        AsmNumericLiteral numLit = findFirstChild(expr, AsmNumericLiteral.class);
+        // Each token inside an expr is wrapped in an `anything` node, so the numeric literal is a
+        // grandchild rather than a direct child — search the whole subtree.
+        AsmNumericLiteral numLit = PsiTreeUtil.findChildOfType(expr, AsmNumericLiteral.class);
         if (numLit == null) return null;
         // Only handle single-token expressions (no arithmetic)
         String exprText = expr.getText().trim();
@@ -122,13 +155,5 @@ public class AsmEnumMemberMixin extends ASTWrapperPsiElement implements AsmLabel
         String exprText = expr.getText().trim();
         if (exprText.isEmpty() || !exprText.matches("[A-Za-z_][A-Za-z0-9_]*")) return null;
         return nameToValue.get(exprText);
-    }
-
-    @Nullable
-    private static <T extends PsiElement> T findFirstChild(PsiElement element, Class<T> type) {
-        for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-            if (type.isInstance(child)) return type.cast(child);
-        }
-        return null;
     }
 }
