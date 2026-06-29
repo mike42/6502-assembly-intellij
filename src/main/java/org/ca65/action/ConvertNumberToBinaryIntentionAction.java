@@ -8,12 +8,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.ca65.Asm6502Bundle;
+import org.ca65.helpers.NumericLiteralValue;
 import org.ca65.psi.AsmElementFactory;
 import org.ca65.psi.AsmFile;
 import org.ca65.psi.AsmNumericLiteral;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static org.ca65.action.IntentionActionUtil.*;
+import static org.ca65.action.IntentionActionUtil.getAsmNumericLiteral;
 
 public class ConvertNumberToBinaryIntentionAction extends BaseIntentionAction {
     @Override
@@ -23,53 +25,22 @@ public class ConvertNumberToBinaryIntentionAction extends BaseIntentionAction {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!(file instanceof AsmFile)) {
-            return false;
-        }
+        if (!(file instanceof AsmFile)) return false;
         AsmNumericLiteral literal = getAsmNumericLiteral(editor, file);
-        if (literal == null) { // Caret is not over a numeric literal
-            return false;
-        }
-        String text = literal.getText();
-        if (!canConvertToBinary(text)) {
-            return false;
-        }
-        setText(Asm6502Bundle.message("INTN.convert.to.bin", literal.getText(), doConvertToBinary(literal.getText())));
+        if (literal == null) return false;
+        NumericLiteralValue lit = NumericLiteralValue.parse(literal.getText());
+        if (lit == null || lit.getRepresentation() == NumericLiteralValue.Representation.BINARY) return false;
+        setText(Asm6502Bundle.message("INTN.convert.to.bin", literal.getText(), lit.toBinary()));
         return true;
-    }
-
-    private static boolean canConvertToBinary(String text) {
-        return isConvertibleDec(text) || isConvertibleHex(text);
-    }
-
-    private static String doConvertToBinary(String str) {
-        // Parse
-        final int intValue;
-        if(str.startsWith("$")) {
-            intValue = Integer.parseInt(str.substring(1), 16); // From hex eg. "$ff"
-        } else {
-            intValue = Integer.parseInt(str, 10);  // From dec eg. "42"
-        }
-        String binString = Integer.toBinaryString(intValue);
-        // Pad to 8 bit, 16 bit, 24-bit values.
-        int currentLen = binString.length();
-        int remainder = currentLen % 8;
-        if(remainder != 0) {
-            // Pad to multiple of 8 bits
-            binString = "0".repeat(8 - remainder) + binString;
-        }
-        return "%" + binString; // Prefixed with %
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         AsmNumericLiteral literal = getAsmNumericLiteral(editor, file);
-        if(literal == null || !canConvertToBinary(literal.getText())) {
-            // Some weirdness if this happens
-            return;
-        }
-        String replacement = doConvertToBinary(literal.getText());
-        PsiElement newLiteral = AsmElementFactory.createNumericLiteral(project, replacement);
+        if (literal == null) return;
+        @Nullable NumericLiteralValue lit = NumericLiteralValue.parse(literal.getText());
+        if (lit == null || lit.getRepresentation() == NumericLiteralValue.Representation.BINARY) return;
+        PsiElement newLiteral = AsmElementFactory.createNumericLiteral(project, lit.toBinary());
         literal.replace(newLiteral);
     }
 }

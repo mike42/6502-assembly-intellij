@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.ca65.helpers.NumericLiteralValue;
 import org.ca65.psi.AsmNumericLiteral;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,43 +24,18 @@ public class AsmDocumentationProvider extends AbstractDocumentationProvider {
     @Override
     public @Nullable String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
         if (!(element instanceof AsmNumericLiteral)) return null;
-        String text = element.getText();
-        int value;
-        try {
-            value = parseNumericLiteral(text);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        NumericLiteralValue lit = NumericLiteralValue.parse(element.getText());
+        if (lit == null) return null;
+        boolean isHex = lit.getRepresentation() == NumericLiteralValue.Representation.HEX
+                     || lit.getRepresentation() == NumericLiteralValue.Representation.ZILOG_HEX;
+        boolean isDec = lit.getRepresentation() == NumericLiteralValue.Representation.DECIMAL;
+        boolean isBin = lit.getRepresentation() == NumericLiteralValue.Representation.BINARY;
         StringBuilder sb = new StringBuilder("<table>");
-        appendRow(sb, "Hexadecimal", toHex(value), text.startsWith("$"));
-        appendRow(sb, "Decimal", Integer.toString(value), !text.startsWith("$") && !text.startsWith("%"));
-        appendRow(sb, "Binary", toBinary(value), text.startsWith("%"));
+        appendRow(sb, "Hexadecimal", lit.toHex(), isHex);
+        appendRow(sb, "Decimal",     lit.toDecimal(), isDec);
+        appendRow(sb, "Binary",      lit.toBinary(), isBin);
         sb.append("</table>");
         return sb.toString();
-    }
-
-    private static int parseNumericLiteral(String text) {
-        String digits = text.replace("_", "");
-        if (digits.startsWith("$")) {
-            return Integer.parseInt(digits.substring(1), 16);
-        } else if (digits.startsWith("%")) {
-            return Integer.parseInt(digits.substring(1), 2);
-        } else {
-            return Integer.parseInt(digits, 10);
-        }
-    }
-
-    private static String toHex(int value) {
-        String raw = Integer.toHexString(value);
-        if (raw.length() % 2 == 1) raw = "0" + raw;
-        return "$" + raw;
-    }
-
-    private static String toBinary(int value) {
-        String raw = Integer.toBinaryString(value);
-        int remainder = raw.length() % 8;
-        if (remainder != 0) raw = "0".repeat(8 - remainder) + raw;
-        return "%" + raw;
     }
 
     private static void appendRow(StringBuilder sb, String label, String value, boolean isCurrent) {

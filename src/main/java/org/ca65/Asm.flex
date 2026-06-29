@@ -21,11 +21,13 @@ WHITE_SPACE_CHAR = {EOL_WS} | {LINE_WS}
 
 INT_LITERAL = ( {DEC_LITERAL}
               | {HEX_LITERAL}
-              | {BIN_LITERAL} )
+              | {BIN_LITERAL}
+              | {HEX_LITERAL_ZILOG} )
 
 DEC_LITERAL = [0-9] [0-9_]*
 HEX_LITERAL = "$" [a-fA-F0-9_]*
 BIN_LITERAL = "%" [01_]*
+HEX_LITERAL_ZILOG = [0-9][0-9a-fA-F_]*[hH]
 
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* \"
 CHAR_LITERAL = \' ( [^\\\'] | \\[^] ){1} \'
