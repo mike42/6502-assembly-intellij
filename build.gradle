@@ -96,7 +96,21 @@ tasks.register('generateAsmLexer', GenerateLexerTask) {
     purgeOldFiles = true
 }
 
+tasks.register('generateLd65Parser', GenerateParserTask) {
+    sourceFile = file('src/main/java/org/ca65/ld65/Ld65.bnf')
+    targetRootOutputDir = file('src/main/gen')
+    pathToParser = 'org/ca65/ld65/Ld65Parser.java'
+    pathToPsiRoot = 'org/ca65/ld65/psi'
+    purgeOldFiles = true
+}
+
+tasks.register('generateLd65Lexer', GenerateLexerTask) {
+    sourceFile = file('src/main/java/org/ca65/ld65/Ld65.flex')
+    targetOutputDir = file('src/main/gen/org/ca65/ld65')
+    purgeOldFiles = true
+}
+
 // Make sure generated sources exist before the Java compiler runs.
 tasks.named('compileJava') {
-    dependsOn 'generateAsmLexer', 'generateAsmParser'
+    dependsOn 'generateAsmLexer', 'generateAsmParser', 'generateLd65Lexer', 'generateLd65Parser'
 }

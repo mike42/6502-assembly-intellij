@@ -1,0 +1,54 @@
+{
+parserClass="org.ca65.ld65.Ld65Parser"
+
+extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+psiClassPrefix="Ld65"
+psiImplClassSuffix="Impl"
+psiPackage="org.ca65.ld65.psi"
+psiImplPackage="org.ca65.ld65.psi.impl"
+
+elementTypeHolderClass="org.ca65.ld65.psi.Ld65Types"
+elementTypeClass="org.ca65.ld65.psi.Ld65ElementType"
+tokenTypeClass="org.ca65.ld65.psi.Ld65TokenType"
+
+// Declare tokens that are used by the lexer but never appear in grammar rules,
+// so GrammarKit still generates their constants in Ld65Types.
+// WHITE_SPACE is intentionally omitted: it comes from com.intellij.psi.TokenType
+// via the flex static import, and adding it here would cause an import ambiguity.
+tokens = [
+    COMMENT = 'COMMENT'
+]
+}
+
+cfgFile ::= section*
+
+// A top-level section block, e.g. MEMORY { ... }
+section ::= sectionKeyword LBRACE entry* RBRACE
+
+private sectionKeyword ::= MEMORY_KW | SEGMENTS_KW | FILES_KW | FORMATS_KW | FEATURES_KW | SYMBOLS_KW
+
+// A named entry inside a section, e.g.  ZP: start = $0000, size = $0100;
+entry ::= entryName COLON attrList SEMICOLON
+
+// Entry names may be bare identifiers, quoted strings (%O), or format specifiers (%O/%S)
+private entryName ::= IDENTIFIER | STRING_LITERAL | FORMAT_SPEC
+
+private attrList ::= (attribute (COMMA? attribute)*)?
+
+// Key = value attribute pair
+attribute ::= IDENTIFIER EQUALS attrValue
+
+// Attribute values: either a quoted string (file names) or an arithmetic expression
+attrValue ::= STRING_LITERAL | expr
+
+// Expression with standard arithmetic precedence
+expr ::= exprAdd
+
+private exprAdd  ::= exprMul ((PLUS | MINUS) exprMul)*
+private exprMul  ::= exprUnary ((STAR | DIV) exprUnary)*
+private exprUnary ::= (MINUS | PLUS) exprUnary | exprPrimary
+private exprPrimary ::= IDENTIFIER (COLON IDENTIFIER)?
+                      | INT_LITERAL
+                      | FORMAT_SPEC
+                      | LPAREN exprAdd RPAREN
