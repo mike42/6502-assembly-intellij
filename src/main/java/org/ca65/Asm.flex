@@ -117,8 +117,14 @@ LOCAL_LABEL_REF = "@" [A-Za-z_]+[A-Za-z0-9_]*
     "::"                       { return SCOPE_ACCESS; }
     {SHORTLABEL_REF}           { return SHORTLABEL_REF; }
     ":"                        { return SHORTLABEL; }
+    "<="                       { return LE; }
+    ">="                       { return GE; }
+    "<>"                       { return NE; }
     ">"                        { return HIBYTE; }
     "<"                        { return LOBYTE; }
+    "!"                        { return BOOLNOT; }
+    "{"                        { return LCURLY; }
+    "}"                        { return RCURLY; }
     "/"                        { return DIV; }
     "*"                        { return MUL; }
     "+"                        { return ADD; }
