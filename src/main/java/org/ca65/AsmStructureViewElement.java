@@ -49,37 +49,12 @@ public class AsmStructureViewElement implements StructureViewTreeElement, Sortab
 
     @Override
     public TreeElement @NotNull [] getChildren() {
-        if (this.element instanceof AsmFile) {
-            List<TreeElement> treeElements = new ArrayList<>();
-            for (AsmMarker marker : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmMarker.class)) {
-                AsmMarkerImpl markerImpl = (AsmMarkerImpl) marker;
-                if (markerImpl.getText().startsWith(":")) {
-                    continue;
-                }
-                treeElements.add(new AsmStructureViewElement(markerImpl));
-            }
-            for (AsmDefineConstantNumeric constant : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmDefineConstantNumeric.class)) {
-                treeElements.add(new AsmStructureViewElement((AsmDefineConstantNumericImpl) constant));
-            }
-            for (AsmDefineConstantLabel constant : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmDefineConstantLabel.class)) {
-                treeElements.add(new AsmStructureViewElement((AsmDefineConstantLabelImpl) constant));
-            }
-            for (AsmEnumDef enumDef : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmEnumDef.class)) {
-                if (((AsmEnumDefImpl) enumDef).getName() != null) {
-                    treeElements.add(new AsmStructureViewElement((AsmEnumDefImpl) enumDef));
-                }
-            }
-            for (AsmStructDef structDef : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmStructDef.class)) {
-                if (((AsmStructDefImpl) structDef).getName() != null) {
-                    treeElements.add(new AsmStructureViewElement((AsmStructDefImpl) structDef));
-                }
-            }
-            for (AsmUnionDef unionDef : PsiTreeUtil.getChildrenOfTypeAsList(this.element, AsmUnionDef.class)) {
-                if (((AsmUnionDefImpl) unionDef).getName() != null) {
-                    treeElements.add(new AsmStructureViewElement((AsmUnionDefImpl) unionDef));
-                }
-            }
-            return treeElements.toArray(new TreeElement[0]);
+        // File, scope and proc are all containers: their definitions are listed (and scopes/procs
+        // recurse). Anonymous struct/union/enum members spill in, mirroring `Scope::member` access.
+        if (this.element instanceof AsmFile
+                || this.element instanceof AsmScopeDef
+                || this.element instanceof AsmProcDef) {
+            return containerChildren(this.element);
         }
         // Children for enum, struct, union containers
         if (this.element instanceof AsmEnumDef enumDef) {
@@ -100,6 +75,67 @@ public class AsmStructureViewElement implements StructureViewTreeElement, Sortab
                     .toArray(TreeElement[]::new);
         }
         return EMPTY_ARRAY;
+    }
+
+    private static TreeElement @NotNull [] containerChildren(NavigatablePsiElement container) {
+        List<TreeElement> treeElements = new ArrayList<>();
+        NavigatablePsiElement procName = container instanceof AsmProcDef
+                ? (NavigatablePsiElement) ((AsmProcDefMixin) container).getNameElement() : null;
+
+        for (AsmMarker marker : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmMarker.class)) {
+            if (marker.getText().startsWith(":") || marker == procName) {
+                continue; // skip unnamed (':') labels and a proc's own name
+            }
+            treeElements.add(new AsmStructureViewElement((AsmMarkerImpl) marker));
+        }
+        for (AsmDefineConstantNumeric constant : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmDefineConstantNumeric.class)) {
+            treeElements.add(new AsmStructureViewElement((AsmDefineConstantNumericImpl) constant));
+        }
+        for (AsmDefineConstantLabel constant : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmDefineConstantLabel.class)) {
+            treeElements.add(new AsmStructureViewElement((AsmDefineConstantLabelImpl) constant));
+        }
+        for (AsmEnumDef enumDef : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmEnumDef.class)) {
+            if (enumDef.getIdentifierdef() != null) {
+                treeElements.add(new AsmStructureViewElement((AsmEnumDefImpl) enumDef));
+            } else { // anonymous: members spill into this container
+                for (AsmEnumMember member : enumDef.getEnumMemberList()) {
+                    treeElements.add(new AsmStructureViewElement((AsmEnumMemberImpl) member));
+                }
+            }
+        }
+        for (AsmStructDef structDef : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmStructDef.class)) {
+            if (structDef.getIdentifierdef() != null) {
+                treeElements.add(new AsmStructureViewElement((AsmStructDefImpl) structDef));
+            } else {
+                addNamedMembers(structDef.getStructMemberList(), treeElements);
+            }
+        }
+        for (AsmUnionDef unionDef : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmUnionDef.class)) {
+            if (unionDef.getIdentifierdef() != null) {
+                treeElements.add(new AsmStructureViewElement((AsmUnionDefImpl) unionDef));
+            } else {
+                addNamedMembers(unionDef.getStructMemberList(), treeElements);
+            }
+        }
+        for (AsmScopeDef scopeDef : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmScopeDef.class)) {
+            if (((PsiNamedElement) scopeDef).getName() != null) {
+                treeElements.add(new AsmStructureViewElement((AsmScopeDefImpl) scopeDef));
+            }
+        }
+        for (AsmProcDef procDef : PsiTreeUtil.getChildrenOfTypeAsList(container, AsmProcDef.class)) {
+            if (((PsiNamedElement) procDef).getName() != null) {
+                treeElements.add(new AsmStructureViewElement((AsmProcDefImpl) procDef));
+            }
+        }
+        return treeElements.toArray(new TreeElement[0]);
+    }
+
+    private static void addNamedMembers(List<AsmStructMember> members, List<TreeElement> out) {
+        for (AsmStructMember member : members) {
+            if (((PsiNamedElement) member).getName() != null) {
+                out.add(new AsmStructureViewElement((AsmStructMemberImpl) member));
+            }
+        }
     }
 
     @Override

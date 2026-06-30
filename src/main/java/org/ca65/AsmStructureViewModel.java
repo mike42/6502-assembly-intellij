@@ -7,6 +7,8 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.PsiFile;
 import org.ca65.psi.AsmEnumDef;
 import org.ca65.psi.AsmFile;
+import org.ca65.psi.AsmProcDef;
+import org.ca65.psi.AsmScopeDef;
 import org.ca65.psi.AsmStructDef;
 import org.ca65.psi.AsmUnionDef;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,8 @@ public class AsmStructureViewModel extends StructureViewModelBase implements Str
         if (element instanceof AsmStructureViewElement sve) {
             Object val = sve.getValue();
             return !(val instanceof AsmFile || val instanceof AsmEnumDef
-                    || val instanceof AsmStructDef || val instanceof AsmUnionDef);
+                    || val instanceof AsmStructDef || val instanceof AsmUnionDef
+                    || val instanceof AsmScopeDef || val instanceof AsmProcDef);
         }
         return true;
     }

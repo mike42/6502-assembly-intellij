@@ -19,10 +19,10 @@ implements("identifierdef")="com.intellij.psi.PsiNamedElement"
 
 asmFile ::= item_* last_line?
 
-private item_ ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|enum_def|struct_def|union_def|macro|llabel|star_assign)? COMMENT? EOL_WS
+private item_ ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|enum_def|struct_def|union_def|scope_def|proc_def|macro|llabel|star_assign)? COMMENT? EOL_WS
 
 // repeat of above, to handle files that do not end with a newline
-private last_line ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|enum_def|struct_def|union_def|macro|llabel|star_assign)? COMMENT?
+private last_line ::= marker? (dotexpr|register_dotexpr|imports|define_constant_label|define_constant_numeric|enum_def|struct_def|union_def|scope_def|proc_def|macro|llabel|star_assign)? COMMENT?
 
 marker ::= (LABEL | SHORTLABEL) {
     mixin="org.ca65.psi.impl.AsmLabelDefinitionImpl"
@@ -85,6 +85,18 @@ struct_member ::= IDENTIFIER DOT_KEYWORD expr? {
     methods=[getName getPresentation getNameIdentifier setName]
 }
 
+// .scope NAME / .endscope blocks
+scope_def ::= SCOPE_KEYWORD identifierdef? COMMENT? EOL_WS item_* ENDSCOPE_KEYWORD {
+    mixin="org.ca65.psi.impl.AsmScopeDefMixin"
+    methods=[getName getPresentation getNameIdentifier setName]
+}
+
+// .proc NAME / .endproc blocks
+proc_def ::= PROC_KEYWORD marker? identifierdef? expr? COMMENT? EOL_WS item_* ENDPROC_KEYWORD {
+    mixin="org.ca65.psi.impl.AsmProcDefMixin"
+    methods=[getLabelName getName getPresentation getNameIdentifier setName]
+}
+
 expr ::= anything*
 
 anything ::= (instruction_mnemonic|numeric_literal|STRING_LITERAL|DOT_KEYWORD|REGISTER_DOT_KEYWORD|identifierr|LABEL|EQUALS|COLON_EQUALS|COMMA|REGISTER|CHAR_LITERAL|LPAREN|RPAREN|LSQUAREBRACKET|RSQUAREBRACKET|OR|LSHIFT|RSHIFT|AND|CONSTEXPR|SHORTLABEL_REF|local_label_rref|SHORTLABEL|HIBYTE|LOBYTE|BOOLOR|BOOLAND|NOT|DIV|MUL|ADD|SUB|XOR|SCOPE_ACCESS|LE|GE|NE|BOOLNOT|LCURLY|RCURLY)
@@ -103,4 +115,4 @@ local_label_rref ::= LOCAL_LABEL_REF {
 }
 
 // Just to define the symbols
-also ::= (LINE_WS|EOL_WS|ENUM_KEYWORD|ENDENUM_KEYWORD|STRUCT_KEYWORD|ENDSTRUCT_KEYWORD|UNION_KEYWORD|ENDUNION_KEYWORD)
+also ::= (LINE_WS|EOL_WS|ENUM_KEYWORD|ENDENUM_KEYWORD|STRUCT_KEYWORD|ENDSTRUCT_KEYWORD|UNION_KEYWORD|ENDUNION_KEYWORD|SCOPE_KEYWORD|ENDSCOPE_KEYWORD|PROC_KEYWORD|ENDPROC_KEYWORD)
