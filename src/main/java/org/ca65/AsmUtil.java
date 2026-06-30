@@ -186,6 +186,125 @@ public class AsmUtil {
         return null;
     }
 
+    /**
+     * All members of the enum/struct/union named {@code scopeName} visible from {@code asmFile}
+     * (current file then the include graph). Used to complete {@code Scope::member}.
+     */
+    public static List<PsiNamedElement> findScopeMembers(AsmFile asmFile, String scopeName) {
+        List<PsiNamedElement> result = new ArrayList<>();
+        if (asmFile == null || scopeName == null) {
+            return result;
+        }
+        collectScopeMembers(asmFile, scopeName, result);
+        for (AsmFile included : AsmIncludeUtil.getIncludedFiles(asmFile)) {
+            collectScopeMembers(included, scopeName, result);
+        }
+        return result;
+    }
+
+    private static void collectScopeMembers(AsmFile asmFile, String scopeName, List<PsiNamedElement> out) {
+        AsmEnumDef[] enumDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmEnumDef.class);
+        if (enumDefs != null) {
+            for (AsmEnumDef enumDef : enumDefs) {
+                AsmIdentifierdef nameDef = enumDef.getIdentifierdef();
+                if (nameDef != null && scopeName.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    for (AsmEnumMember member : enumDef.getEnumMemberList()) {
+                        out.add(member.getIdentifierdef());
+                    }
+                }
+            }
+        }
+        AsmStructDef[] structDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmStructDef.class);
+        if (structDefs != null) {
+            for (AsmStructDef structDef : structDefs) {
+                AsmIdentifierdef nameDef = structDef.getIdentifierdef();
+                if (nameDef != null && scopeName.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    for (AsmStructMember member : structDef.getStructMemberList()) {
+                        out.add((PsiNamedElement) member);
+                    }
+                }
+            }
+        }
+        AsmUnionDef[] unionDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmUnionDef.class);
+        if (unionDefs != null) {
+            for (AsmUnionDef unionDef : unionDefs) {
+                AsmIdentifierdef nameDef = unionDef.getIdentifierdef();
+                if (nameDef != null && scopeName.equals(AsmPsiImplUtil.getLabelName(nameDef))) {
+                    for (AsmStructMember member : unionDef.getStructMemberList()) {
+                        out.add((PsiNamedElement) member);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * All completable top-level definitions visible from {@code asmFile} (current file then the
+     * include graph): labels, numeric/label constants, imports, and enum/struct/union names.
+     * Enum/struct/union names are returned as their definition element (so callers can detect a
+     * scope and offer {@code ::}); everything else as its {@code identifierdef} / marker.
+     */
+    public static List<PsiNamedElement> collectSymbols(AsmFile asmFile) {
+        List<PsiNamedElement> result = new ArrayList<>();
+        if (asmFile == null) {
+            return result;
+        }
+        collectSymbolsInFile(asmFile, result);
+        for (AsmFile included : AsmIncludeUtil.getIncludedFiles(asmFile)) {
+            collectSymbolsInFile(included, result);
+        }
+        return result;
+    }
+
+    private static void collectSymbolsInFile(AsmFile asmFile, List<PsiNamedElement> out) {
+        AsmMarker[] markers = PsiTreeUtil.getChildrenOfType(asmFile, AsmMarker.class);
+        if (markers != null) {
+            Collections.addAll(out, markers);
+        }
+        AsmImports[] importStatements = PsiTreeUtil.getChildrenOfType(asmFile, AsmImports.class);
+        if (importStatements != null) {
+            for (AsmImports importStatement : importStatements) {
+                out.addAll(importStatement.getIdentifierdefList());
+            }
+        }
+        AsmDefineConstantNumeric[] numericConstants = PsiTreeUtil.getChildrenOfType(asmFile, AsmDefineConstantNumeric.class);
+        if (numericConstants != null) {
+            for (AsmDefineConstantNumeric constant : numericConstants) {
+                out.add(constant.getIdentifierdef());
+            }
+        }
+        AsmDefineConstantLabel[] labelConstants = PsiTreeUtil.getChildrenOfType(asmFile, AsmDefineConstantLabel.class);
+        if (labelConstants != null) {
+            for (AsmDefineConstantLabel constant : labelConstants) {
+                out.add(constant.getIdentifierdef());
+            }
+        }
+        AsmEnumDef[] enumDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmEnumDef.class);
+        if (enumDefs != null) {
+            for (AsmEnumDef enumDef : enumDefs) {
+                if (enumDef.getIdentifierdef() != null) {
+                    out.add((PsiNamedElement) enumDef);
+                }
+            }
+        }
+        AsmStructDef[] structDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmStructDef.class);
+        if (structDefs != null) {
+            for (AsmStructDef structDef : structDefs) {
+                if (structDef.getIdentifierdef() != null) {
+                    out.add((PsiNamedElement) structDef);
+                }
+            }
+        }
+        AsmUnionDef[] unionDefs = PsiTreeUtil.getChildrenOfType(asmFile, AsmUnionDef.class);
+        if (unionDefs != null) {
+            for (AsmUnionDef unionDef : unionDefs) {
+                if (unionDef.getIdentifierdef() != null) {
+                    out.add((PsiNamedElement) unionDef);
+                }
+            }
+        }
+    }
+
     public static List<AsmMarker> findLabels(Project project, String label) {
         List<AsmMarker> result = new ArrayList<>();
         Collection<VirtualFile> virtualFiles =
