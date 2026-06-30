@@ -30,7 +30,7 @@ public class AsmEnumValueInlayHintProvider implements InlayHintsProvider {
                         new InlineInlayPosition(offset, false, 0),
                         null,
                         hint,
-                        false,
+                        HintFormat.Companion.getDefault().withColorKind(HintColorKind.TextWithoutBackground),
                         builder -> {
                             builder.text(hint, null);
                             return Unit.INSTANCE;
