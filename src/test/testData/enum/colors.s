@@ -1,0 +1,21 @@
+.enum COLOR
+  BLACK         = $00
+  WHITE
+  RED
+  CYAN
+  PURPLE
+  GREEN
+  BLUE
+  YELLOW
+  ORANGE
+  BROWN
+  PINK
+  LIGHTRED      = PINK
+  GRAY1
+  GRAY2
+  LIGHTGREEN
+  LIGHTBLUE
+  GRAY3
+.endenum
+
+lda #COLOR::PINK
