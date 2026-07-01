@@ -5,7 +5,9 @@
 [![JetBrains Plugin Downloads](https://img.shields.io/jetbrains/plugin/d/16799?style=flat-square)](https://plugins.jetbrains.com/plugin/16799-6502-assembly)
 [![JetBrains Plugin Rating](https://img.shields.io/jetbrains/plugin/r/rating/16799?style=flat-square)](https://plugins.jetbrains.com/plugin/16799-6502-assembly/reviews)
 
-This is plugin for JetBrains IDE's, which provides basic support for 6502 assembly language. It is suitable for projects which use the `ca65` assembler to target the WDC 6502, 65C816, and related microprocessors.
+This is plugin for JetBrains IDE's, which provides support for 6502 assembly language. It is suitable for projects which use the `ca65` assembler to target the WDC 6502, 65C816, and related microprocessors.
+
+It works in IntelliJ IDEA, CLion, and other IntelliJ-based IDEs (2024.2 and newer).
 
 ![6502 Example in IntelliJ](screenshot/6502_intellij_example.png)
 
@@ -13,11 +15,10 @@ This is plugin for JetBrains IDE's, which provides basic support for 6502 assemb
 
 - Syntax highlighting
 - Go to the definition of a label, constant or import
-- Find usages
-- Refactor/rename a label and its usages
+- Find usages, refactor/rename a symbol and its usages
 - Comment/uncomment blocks of code
 - Code folding for scopes, procedures and macro definitions
-- Completion suggestions for mnemonics and labels
+- Completion suggestions for mnemonics, assembly directives, and labels
 - Warnings for undefined and unused symbols
 - Code formatting
 

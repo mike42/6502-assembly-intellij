@@ -61,7 +61,23 @@ intellijPlatform {
             // against newer IDE builds.
             untilBuild = provider { null }
         }
-        changeNotes = """This release adds CLion support. The plugin's file type was renamed to avoid a name clash with CLion's bundled assembly support."""
+        changeNotes = """<p>This is a significant feature release.</p>
+<ul><li>CLion support has been added.</li>
+<li>Symbol resolution now follows files which are included via ".include". Features such as go-to-definition, find symbol usage, unused symbol detection and renaming now work between included files.</li>
+<li>The plugin now provides basic support for scopes, procedures, structs and enums. The "::" operator to access scopes is now understood.</li>
+<li>Improvements to completion: more types of symbols are now registered, including procedures and label constants. Additional completion providers have been added for assembly directives and pseudo-functions, as well as struct/scope/enum members.</li>
+<li>New icons have been introduced to match the current JetBrains style.</li>
+<li>The '* = \$0000' syntax to set the origin is now supported. The plugin will offer to replace this with '.org \$0000' syntax, which is supported without additional flags in ca65.</li>
+<li>Handling of numeric literals has been overhauled. Quick conversions now appear on hover, enum ordinal values appear as inlay hints. Zilog-style hex syntax (00h) is also now supported, with the plugin offering to replace this with the \$00 hex syntax, which is conventional on 6502 systems.</li>
+<li>Support has been added for ":&gt;" and ":&lt;" syntax when jumping to unnamed labels.</li></ul>
+
+<p>Some bugs were also fixed:</p>
+
+<ul><li>Previously, files without a trailing newline would show as a syntax error. This has now been corrected.</li>
+<li>Label constants such as "FOO := 1" would not parse correctly if they had no spaces "FOO:=1". This has also been corrected.</li></ul>
+
+<p>Feedback is welcome via the project's issue tracker on GitHub.</p>
+"""
     }
 
     pluginVerification {
