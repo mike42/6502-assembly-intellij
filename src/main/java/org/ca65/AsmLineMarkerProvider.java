@@ -8,8 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import org.ca65.psi.AsmAnything;
 import org.ca65.psi.AsmExpr;
 import org.ca65.psi.AsmMarker;
+import org.ca65.psi.AsmProcDef;
 import org.ca65.psi.impl.AsmExprImpl;
 import org.ca65.psi.impl.AsmInstructionMnemonicImpl;
 import org.jetbrains.annotations.NotNull;
@@ -126,6 +128,9 @@ public class AsmLineMarkerProvider extends RelatedItemLineMarkerProvider {
         if(identifierElement.getReference() == null || identifierElement.getParent() == null || identifierElement.getParent().getParent() == null) {
             return;
         }
+        if(isFollowedByScopeAccess(identifierElement)) {
+            return;
+        }
         PsiElement maybeJumpArgument = identifierElement.getParent().getParent();
         if(!(maybeJumpArgument instanceof AsmExpr) || maybeJumpArgument.getPrevSibling() == null || !(maybeJumpArgument.getPrevSibling() instanceof PsiWhiteSpace) || maybeJumpArgument.getPrevSibling().getPrevSibling() == null) {
             return;
@@ -142,11 +147,40 @@ public class AsmLineMarkerProvider extends RelatedItemLineMarkerProvider {
         if(labelDefinition == null) {
             return;
         }
+        final Icon icon;
+        if (labelDefinition instanceof AsmProcDef) {
+            icon = AsmIcons.JUMP_TO_PROC;
+        } else if (leafElement.getText().startsWith("@")) {
+            icon = AsmIcons.JUMP_TO_LOCAL_LABEL;
+        } else {
+            icon = AsmIcons.JUMP_TO_LABEL;
+        }
         NavigationGutterIconBuilder<PsiElement> builder =
-                NavigationGutterIconBuilder.create(leafElement.getText().startsWith("@") ? AsmIcons.JUMP_TO_LOCAL_LABEL : AsmIcons.JUMP_TO_LABEL)
+                NavigationGutterIconBuilder.create(icon)
                         .setTarget(labelDefinition)
                         .setTooltipText("Navigate to label");
         result.add(builder.createLineMarkerInfo(leafElement));
+    }
+
+    private static boolean isFollowedByScopeAccess(PsiElement identifierElement) {
+        PsiElement node = identifierElement.getParent() instanceof AsmAnything
+                ? identifierElement.getParent() : identifierElement;
+        PsiElement sib = node.getNextSibling();
+        while (sib != null && (sib.getNode().getElementType() == LINE_WS
+                || sib.getNode().getElementType() == EOL_WS)) {
+            sib = sib.getNextSibling();
+        }
+        if (sib == null) {
+            return false;
+        }
+        if (sib.getNode().getElementType() == SCOPE_ACCESS) {
+            return true;
+        }
+        if (sib instanceof AsmAnything) {
+            PsiElement child = sib.getFirstChild();
+            return child != null && child.getNode().getElementType() == SCOPE_ACCESS;
+        }
+        return false;
     }
 
     private static boolean isJumpMnemonic(PsiElement mnemonicElement) {

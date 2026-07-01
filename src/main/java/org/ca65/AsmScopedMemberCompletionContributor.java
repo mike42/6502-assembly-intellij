@@ -7,18 +7,22 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
-import org.ca65.psi.AsmFile;
 import org.ca65.psi.AsmTypes;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
- * Completes members of an enum/struct/union after {@code Scope::} — and only that scope's members,
- * so {@code SHIRT_SIZE::} offers {@code SMALL/MEDIUM/LARGE} rather than every label in the project.
+ * Completes members of the scope/struct/union/enum named by a {@code A::B::} prefix — and only that
+ * container's members, so {@code SYSTEM::} offers its members rather than every label in the project.
  */
 public class AsmScopedMemberCompletionContributor extends CompletionContributor {
     public AsmScopedMemberCompletionContributor() {
@@ -33,22 +37,37 @@ class ScopedMemberCompletionProvider extends CompletionProvider<CompletionParame
     public void addCompletions(@NotNull CompletionParameters parameters,
                                @NotNull ProcessingContext context,
                                @NotNull CompletionResultSet resultSet) {
-        PsiElement scopeAccess = prevSignificantLeaf(parameters.getPosition());
-        if (scopeAccess == null || scopeAccess.getNode().getElementType() != AsmTypes.SCOPE_ACCESS) {
+        // Walk the "A::B::" prefix backwards from the caret into a list of scope names.
+        List<String> scopes = new ArrayList<>();
+        PsiElement leaf = prevSignificantLeaf(parameters.getPosition());
+        while (leaf != null && leaf.getNode().getElementType() == AsmTypes.SCOPE_ACCESS) {
+            PsiElement nameLeaf = prevSignificantLeaf(leaf);
+            if (nameLeaf == null || !isIdentifier(nameLeaf.getNode().getElementType())) {
+                break;
+            }
+            scopes.add(0, nameLeaf.getText());
+            leaf = prevSignificantLeaf(nameLeaf);
+        }
+        if (scopes.isEmpty()) {
             return;
         }
-        PsiElement scopeName = prevSignificantLeaf(scopeAccess);
-        if (scopeName == null) {
-            return;
+
+        PsiFile original = parameters.getOriginalFile();
+        PsiElement contextElement = original.findElementAt(Math.max(0, parameters.getOffset() - 1));
+        if (contextElement == null) {
+            contextElement = original;
         }
-        AsmFile file = (AsmFile) parameters.getOriginalFile();
-        for (PsiNamedElement member : AsmUtil.findScopeMembers(file, scopeName.getText())) {
+        for (PsiNamedElement member : AsmUtil.scopeMembersForCompletion(contextElement, scopes)) {
             if (member.getName() != null) {
                 resultSet.addElement(LookupElementBuilder.createWithIcon(member));
             }
         }
         // Only members belong here; suppress the generic label/symbol suggestions.
         resultSet.stopHere();
+    }
+
+    private static boolean isIdentifier(IElementType type) {
+        return type == AsmTypes.IDENTIFIER || type == AsmTypes.MNEMONIC;
     }
 
     private static PsiElement prevSignificantLeaf(PsiElement element) {

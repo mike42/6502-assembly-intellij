@@ -53,7 +53,9 @@ public class AsmSyntaxHighlighter extends SyntaxHighlighterBase {
                 || tokenType.equals(AsmTypes.REGISTER_DOT_KEYWORD)
                 || tokenType.equals(AsmTypes.ENUM_KEYWORD) || tokenType.equals(AsmTypes.ENDENUM_KEYWORD)
                 || tokenType.equals(AsmTypes.STRUCT_KEYWORD) || tokenType.equals(AsmTypes.ENDSTRUCT_KEYWORD)
-                || tokenType.equals(AsmTypes.UNION_KEYWORD) || tokenType.equals(AsmTypes.ENDUNION_KEYWORD)) {
+                || tokenType.equals(AsmTypes.UNION_KEYWORD) || tokenType.equals(AsmTypes.ENDUNION_KEYWORD)
+                || tokenType.equals(AsmTypes.SCOPE_KEYWORD) || tokenType.equals(AsmTypes.ENDSCOPE_KEYWORD)
+                || tokenType.equals(AsmTypes.PROC_KEYWORD) || tokenType.equals(AsmTypes.ENDPROC_KEYWORD)) {
             return DOT_KEYWORD_KEYS;
         } else if(tokenType.equals(AsmTypes.IDENTIFIER) || tokenType.equals(AsmTypes.LABEL) || tokenType.equals(AsmTypes.LOCAL_LABEL_REF)) {
             return IDENTIFIER_KEYS;

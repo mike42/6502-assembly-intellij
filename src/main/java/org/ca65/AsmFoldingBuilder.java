@@ -30,21 +30,22 @@ public class AsmFoldingBuilder extends FoldingBuilderEx implements DumbAware {
         for (AsmUnionDef unionDef : PsiTreeUtil.findChildrenOfType(file, AsmUnionDef.class)) {
             descriptors.add(new FoldingDescriptor(unionDef.getNode(), unionDef.getTextRange()));
         }
+        for (AsmScopeDef scopeDef : PsiTreeUtil.findChildrenOfType(file, AsmScopeDef.class)) {
+            descriptors.add(new FoldingDescriptor(scopeDef.getNode(), scopeDef.getTextRange()));
+        }
+        for (AsmProcDef procDef : PsiTreeUtil.findChildrenOfType(file, AsmProcDef.class)) {
+            descriptors.add(new FoldingDescriptor(procDef.getNode(), procDef.getTextRange()));
+        }
 
-        // Remaining blocks (if/proc/macro/scope/repeat) are still plain dotexpr nodes.
-        AsmDotexpr[] dotexprs = PsiTreeUtil.getChildrenOfType(file, AsmDotexpr.class);
-        if (dotexprs != null) {
-            List<FoldableStack> foldableBlockTypes = Arrays.asList(
-                    new FoldableStack(Set.of(".if", ".ifblank", ".ifconst", ".ifdef", ".ifnblank", ".ifndef", ".ifnfref", ".ifp02", ".ifp816", ".ifpc02", ".ifpsc02", ".ifref"), Set.of(".endif")),
-                    new FoldableStack(Set.of(".macro", ".mac"), Set.of(".endmacro", ".endmac")),
-                    new FoldableStack(Set.of(".proc"), Set.of(".endproc")),
-                    new FoldableStack(Set.of(".repeat"), Set.of(".endrep", ".endrepeat")),
-                    new FoldableStack(Set.of(".scope"), Set.of(".endscope"))
-            );
-            for (AsmDotexpr expr : dotexprs) {
-                for (FoldableStack foldableStack : foldableBlockTypes) {
-                    foldableStack.apply(expr, descriptors);
-                }
+        // Remaining blocks (if/macro/repeat) are still plain dotexpr nodes.
+        List<FoldableStack> foldableBlockTypes = Arrays.asList(
+                new FoldableStack(Set.of(".if", ".ifblank", ".ifconst", ".ifdef", ".ifnblank", ".ifndef", ".ifnfref", ".ifp02", ".ifp816", ".ifpc02", ".ifpsc02", ".ifref"), Set.of(".endif")),
+                new FoldableStack(Set.of(".macro", ".mac"), Set.of(".endmacro", ".endmac")),
+                new FoldableStack(Set.of(".repeat"), Set.of(".endrep", ".endrepeat"))
+        );
+        for (AsmDotexpr expr : PsiTreeUtil.findChildrenOfType(file, AsmDotexpr.class)) {
+            for (FoldableStack foldableStack : foldableBlockTypes) {
+                foldableStack.apply(expr, descriptors);
             }
         }
         return descriptors.toArray(new FoldingDescriptor[0]);

@@ -14,6 +14,9 @@ import org.ca65.psi.impl.AsmPsiImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AsmIdentifierImpl extends ASTWrapperPsiElement implements AsmIdentifier {
     public AsmIdentifierImpl(@NotNull ASTNode node) {
         super(node);
@@ -43,34 +46,30 @@ public class AsmIdentifierImpl extends ASTWrapperPsiElement implements AsmIdenti
                 if (name == null) {
                     return null;
                 }
-                AsmFile file = (AsmFile) parent.getContainingFile();
 
-                // Scoped access: "Scope::member". Each element inside an expr is wrapped in an
-                // `anything` node, so the "::" and the scope name are siblings of our enclosing
-                // `anything`, not of the identifierr itself.
+                // Collect a "A::B::C" chain. Each element inside an expr is wrapped in an `anything`
+                // node, so the "::" and the scope names are siblings of our enclosing `anything`.
                 PsiElement refNode = parent.getParent() instanceof AsmAnything ? parent.getParent() : parent;
-                PsiElement prev = getPrevSignificantSibling(refNode);
-                if (isScopeAccess(prev)) {
-                    String scopeName = identifierNameOf(getPrevSignificantSibling(prev));
-                    return scopeName == null ? null : AsmUtil.findScopedMember(file, scopeName, name);
-                }
-
-                // A bare reference inside an enum body resolves against peer members first
-                // (e.g. `LIGHTRED = PINK`). Walk up to the enclosing enum, if any.
-                PsiElement cur = parent.getParent();
-                while (cur != null && !(cur instanceof PsiFile)) {
-                    if (cur instanceof AsmEnumDef enumDef) {
-                        for (AsmEnumMember member : enumDef.getEnumMemberList()) {
-                            AsmIdentifierdef memberDef = member.getIdentifierdef();
-                            if (name.equals(AsmPsiImplUtil.getName(memberDef))) {
-                                return memberDef;
-                            }
-                        }
+                List<String> segments = new ArrayList<>();
+                segments.add(name);
+                for (PsiElement cursor = refNode; ; ) {
+                    PsiElement sep = getPrevSignificantSibling(cursor);
+                    if (!isScopeAccess(sep)) {
                         break;
                     }
-                    cur = cur.getParent();
+                    PsiElement scopeEl = getPrevSignificantSibling(sep);
+                    String scopeName = identifierNameOf(scopeEl);
+                    if (scopeName == null) {
+                        break;
+                    }
+                    segments.add(0, scopeName);
+                    cursor = scopeEl;
                 }
-                return AsmUtil.findDefinition(file, name);
+
+                if (segments.size() > 1) {
+                    return AsmUtil.resolveScoped(parent, segments);
+                }
+                return AsmUtil.resolveLexical(parent, name);
             }
 
             private PsiElement getPrevSignificantSibling(PsiElement element) {
@@ -173,6 +172,12 @@ public class AsmIdentifierImpl extends ASTWrapperPsiElement implements AsmIdenti
         }
         if (element instanceof AsmUnionDef d) {
             return d.getIdentifierdef();
+        }
+        if (element instanceof AsmScopeDef d) {
+            return d.getIdentifierdef();
+        }
+        if (element instanceof AsmProcDefMixin d) {
+            return d.getNameElement();
         }
         return element;
     }

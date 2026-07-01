@@ -4,10 +4,12 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ProcessingContext;
 import org.ca65.psi.AsmEnumDef;
-import org.ca65.psi.AsmFile;
+import org.ca65.psi.AsmScopeDef;
 import org.ca65.psi.AsmStructDef;
 import org.ca65.psi.AsmTypes;
 import org.ca65.psi.AsmUnionDef;
@@ -39,8 +41,12 @@ class LabelCompletionProvider extends CompletionProvider<CompletionParameters> {
     public void addCompletions(@NotNull CompletionParameters parameters,
                                @NotNull ProcessingContext context,
                                @NotNull CompletionResultSet resultSet) {
-        AsmFile file = (AsmFile) parameters.getOriginalFile();
-        for (PsiNamedElement namedElement : AsmUtil.collectSymbols(file)) {
+        PsiFile original = parameters.getOriginalFile();
+        PsiElement contextElement = original.findElementAt(Math.max(0, parameters.getOffset() - 1));
+        if (contextElement == null) {
+            contextElement = original;
+        }
+        for (PsiNamedElement namedElement : AsmUtil.collectVisibleSymbols(contextElement)) {
             String elementName = namedElement.getName();
             if (elementName == null) {
                 continue;
@@ -62,6 +68,7 @@ class LabelCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private static boolean isScope(PsiNamedElement element) {
-        return element instanceof AsmEnumDef || element instanceof AsmStructDef || element instanceof AsmUnionDef;
+        return element instanceof AsmEnumDef || element instanceof AsmStructDef
+                || element instanceof AsmUnionDef || element instanceof AsmScopeDef;
     }
 }
