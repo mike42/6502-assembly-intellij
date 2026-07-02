@@ -30,7 +30,7 @@ BIN_LITERAL = "%" [01_]*
 HEX_LITERAL_ZILOG = [0-9][0-9a-fA-F_]*[hH]
 
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* \"
-CHAR_LITERAL = \' ( [^\\\'] | \\[^] ){1} \'
+CHAR_LITERAL = \'[^\r^n]\'
 
 IDENTIFIER = [A-Za-z_]+[A-Za-z0-9_]*
 GLOBAL_LABEL = [A-Za-z_]+[A-Za-z0-9_]* ":"
