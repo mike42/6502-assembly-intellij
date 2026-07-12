@@ -1,6 +1,7 @@
 package org.ca65.buildcfg;
 
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,12 +11,14 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * One named way of building the project: a set of top-level source files
- * (each assembled to its own object file) linked into a single binary.
- * Serialized into the project's ca65-build.xml by {@link Ca65BuildSettings}.
+ * How to build a 6502 program: a set of top-level source files (each
+ * assembled to its own object file) linked into a single binary. Embedded
+ * in {@code Ca65RunConfiguration} and serialized as part of it.
  */
 @Tag("configuration")
 public class Ca65BuildConfiguration {
+    /** Derived from the owning run configuration's name; not serialized. */
+    @Transient
     public String name = "";
 
     /** Project-relative paths of top-level assembly files, one .o each. */

@@ -1,14 +1,15 @@
 package org.ca65.config;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.XMap;
-import org.ca65.buildcfg.Ca65ActiveConfiguration;
-import org.ca65.buildcfg.Ca65BuildConfiguration;
 import org.ca65.buildcfg.Ca65TargetSystem;
 import org.ca65.helpers.Cpu;
+import org.ca65.run.Ca65RunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "AsmConfiguration",
@@ -44,15 +45,15 @@ public class AsmConfiguration implements PersistentStateComponent<AsmConfigurati
     }
 
     /**
-     * The CPU the editor should assume, layered: the active build
-     * configuration's CPU when one exists, else the manually chosen value.
+     * The CPU the editor should assume, layered: the selected run
+     * configuration's CPU when it is a 6502 one, else the manual value.
      */
     public Cpu getCpu() {
         if (myProject != null && !myProject.isDisposed()) {
-            Ca65BuildConfiguration active =
-                    Ca65ActiveConfiguration.getInstance(myProject).getActiveConfiguration();
-            if (active != null) {
-                return Ca65TargetSystem.editorCpuFor(active.getEffectiveCpuName());
+            RunnerAndConfigurationSettings selected =
+                    RunManager.getInstance(myProject).getSelectedConfiguration();
+            if (selected != null && selected.getConfiguration() instanceof Ca65RunConfiguration runConfig) {
+                return Ca65TargetSystem.editorCpuFor(runConfig.getBuildSpec().getEffectiveCpuName());
             }
         }
         return getManualCpu();
