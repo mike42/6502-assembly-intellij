@@ -1,9 +1,12 @@
 package org.ca65.status;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerListener;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -15,13 +18,10 @@ import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.util.messages.MessageBusConnection;
 import org.ca65.Asm6502Bundle;
 import org.ca65.AsmFileType;
-import org.ca65.buildcfg.Ca65ActiveConfiguration;
-import org.ca65.buildcfg.Ca65BuildConfigurable;
-import org.ca65.buildcfg.Ca65BuildConfiguration;
-import org.ca65.buildcfg.Ca65BuildSettings;
-import org.ca65.buildcfg.Ca65TargetSystem;
 import org.ca65.config.AsmConfiguration;
 import org.ca65.helpers.Cpu;
+import org.ca65.run.Ca65RunConfiguration;
+import org.ca65.run.Ca65RunConfigurationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +30,8 @@ import java.util.List;
 
 /**
  * Status bar widget showing the CPU the editor currently assumes for
- * assembly files. The popup switches the active build configuration when
- * configurations exist, or the manual project CPU when none do.
+ * assembly files. The popup switches the selected run configuration when
+ * 6502 configurations exist, or the manual project CPU when none do.
  */
 public class AsmCpuStatusBarWidget extends EditorBasedStatusBarPopup {
     public static final String WIDGET_ID = "Asm6502Cpu";
@@ -46,12 +46,12 @@ public class AsmCpuStatusBarWidget extends EditorBasedStatusBarPopup {
             return WidgetState.HIDDEN;
         }
         Project project = getProject();
-        Ca65BuildConfiguration active = Ca65ActiveConfiguration.getInstance(project).getActiveConfiguration();
+        Ca65RunConfiguration selected = selectedCa65Configuration(project);
         String cpuText;
         String tooltip;
-        if (active != null) {
-            cpuText = active.getEffectiveCpuName();
-            tooltip = Asm6502Bundle.message("WIDGET.cpu.tooltip.config", cpuText, active.name);
+        if (selected != null) {
+            cpuText = selected.getBuildSpec().getEffectiveCpuName();
+            tooltip = Asm6502Bundle.message("WIDGET.cpu.tooltip.config", cpuText, selected.getName());
         } else {
             cpuText = AsmConfiguration.getInstance(project).getCpu().name;
             tooltip = Asm6502Bundle.message("WIDGET.cpu.tooltip.manual", cpuText);
@@ -59,12 +59,21 @@ public class AsmCpuStatusBarWidget extends EditorBasedStatusBarPopup {
         return new WidgetState(tooltip, cpuText, true);
     }
 
+    @Nullable
+    private static Ca65RunConfiguration selectedCa65Configuration(@NotNull Project project) {
+        RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
+        return selected != null && selected.getConfiguration() instanceof Ca65RunConfiguration configuration
+                ? configuration : null;
+    }
+
     @Override
     protected @Nullable ListPopup createPopup(@NotNull DataContext context) {
         Project project = getProject();
-        List<Ca65BuildConfiguration> configs = Ca65BuildSettings.getInstance(project).getConfigurations();
-        if (!configs.isEmpty()) {
-            return createConfigPopup(project, configs);
+        RunManager runManager = RunManager.getInstance(project);
+        List<RunnerAndConfigurationSettings> configurations =
+                runManager.getConfigurationSettingsList(Ca65RunConfigurationType.getInstance());
+        if (!configurations.isEmpty()) {
+            return createConfigPopup(project, runManager, configurations);
         }
         return createManualCpuPopup(project);
     }
@@ -77,15 +86,20 @@ public class AsmCpuStatusBarWidget extends EditorBasedStatusBarPopup {
         }
     }
 
-    private ListPopup createConfigPopup(Project project, List<Ca65BuildConfiguration> configs) {
+    private ListPopup createConfigPopup(Project project, RunManager runManager,
+                                        List<RunnerAndConfigurationSettings> configurations) {
         List<Item> items = new ArrayList<>();
-        for (Ca65BuildConfiguration config : configs) {
-            items.add(new Item(config.name + " (" + config.getEffectiveCpuName() + ")",
-                    () -> Ca65ActiveConfiguration.getInstance(project).setActiveConfigurationName(config.name)));
+        for (RunnerAndConfigurationSettings settings : configurations) {
+            if (!(settings.getConfiguration() instanceof Ca65RunConfiguration configuration)) {
+                continue;
+            }
+            String cpu = configuration.getBuildSpec().getEffectiveCpuName();
+            items.add(new Item(settings.getName() + " (" + cpu + ")",
+                    () -> runManager.setSelectedConfiguration(settings)));
         }
         items.add(new Item(Asm6502Bundle.message("WIDGET.cpu.edit.configurations"),
-                () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, Ca65BuildConfigurable.class)));
-        return createPopup(project, Asm6502Bundle.message("WIDGET.cpu.popup.title.configs"), items);
+                () -> new EditConfigurationsDialog(project).show()));
+        return createPopup(Asm6502Bundle.message("WIDGET.cpu.popup.title.configs"), items);
     }
 
     private ListPopup createManualCpuPopup(Project project) {
@@ -97,11 +111,11 @@ public class AsmCpuStatusBarWidget extends EditorBasedStatusBarPopup {
             }));
         }
         items.add(new Item(Asm6502Bundle.message("WIDGET.cpu.edit.configurations"),
-                () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, Ca65BuildConfigurable.class)));
-        return createPopup(project, Asm6502Bundle.message("WIDGET.cpu.popup.title.manual"), items);
+                () -> new EditConfigurationsDialog(project).show()));
+        return createPopup(Asm6502Bundle.message("WIDGET.cpu.popup.title.manual"), items);
     }
 
-    private ListPopup createPopup(Project project, String title, List<Item> items) {
+    private ListPopup createPopup(String title, List<Item> items) {
         BaseListPopupStep<Item> step = new BaseListPopupStep<>(title, items) {
             @Override
             public @Nullable PopupStep<?> onChosen(Item selectedValue, boolean finalChoice) {
@@ -116,8 +130,27 @@ public class AsmCpuStatusBarWidget extends EditorBasedStatusBarPopup {
 
     @Override
     protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-        connection.subscribe(Ca65ActiveConfiguration.Listener.TOPIC,
-                (Ca65ActiveConfiguration.Listener) () -> update());
+        connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
+            @Override
+            public void runConfigurationSelected(@Nullable RunnerAndConfigurationSettings settings) {
+                update();
+            }
+
+            @Override
+            public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+                update();
+            }
+
+            @Override
+            public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+                update();
+            }
+
+            @Override
+            public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
+                update();
+            }
+        });
     }
 
     @Override

@@ -43,8 +43,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -55,12 +58,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * the client's reader thread, and neither may block on protocol requests
  * (the reader thread completes them).
  *
- * <p>Stop filtering (see debugger-research/FINDINGS.md): VICE emits
- * STOPPED/RESUMED chatter during autostart, reset and around every
- * mid-run command. A stop is surfaced to the IDE only when it is
- * (a) preceded by a checkpoint-hit event, (b) the completion of a step
- * request, or (c) an explicit user pause; everything else is transient
- * and ignored.
+ * <p>Stop filtering: VICE emits STOPPED/RESUMED chatter during autostart,
+ * reset and around every mid-run command. A stop is surfaced to the IDE
+ * only when it is (a) preceded by a checkpoint-hit event, (b) the
+ * completion of a step request, or (c) an explicit user pause; everything
+ * else is transient and ignored.
  */
 public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorClient.EventListener {
     private static final Logger LOG = Logger.getInstance(AsmDebugProcess.class);
@@ -95,16 +97,19 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
     private final AtomicInteger myLastHitCheckpoint = new AtomicInteger(-1);
     private volatile boolean myStepPending;
     private volatile int myStepCheckpoint = -1;
+    private volatile int myStepCheckpointAddress = -1;
     private volatile boolean myPauseRequested;
     private volatile boolean mySuspended;
+
+    /** Address of each armed breakpoint checkpoint, for the step-off logic. */
+    private final Map<Integer, Integer> myCheckpointAddress = new ConcurrentHashMap<>();
+    /** Set while a step-off is in flight; captures its stop event. */
+    private volatile CompletableFuture<Integer> myStepOffStop;
 
     public AsmDebugProcess(@NotNull XDebugSession session, @NotNull Ca65RunConfiguration runConfiguration)
             throws ExecutionException {
         super(session);
-        myBuildConfig = runConfiguration.findBuildConfiguration();
-        if (myBuildConfig == null) {
-            throw new ExecutionException(Asm6502Bundle.message("RUN.error.no.build.config"));
-        }
+        myBuildConfig = runConfiguration.getBuildSpec();
         Ca65TargetSystem system = myBuildConfig.getTargetSystemEnum();
         EmulatorProvider provider = EmulatorProvider.findById(runConfiguration.getEmulatorId());
         if (system == null || provider == null || !provider.supportsDebugging(system)) {
@@ -112,7 +117,7 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
         }
         myBasePath = runConfiguration.getProject().getBasePath();
         if (myBasePath == null) {
-            throw new ExecutionException(Asm6502Bundle.message("RUN.error.no.build.config"));
+            throw new ExecutionException(Asm6502Bundle.message("RUN.error.no.project.path"));
         }
 
         File dbgFile = Ca65BuildPaths.dbgFile(myBasePath, myBuildConfig);
@@ -226,9 +231,8 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
     @Override
     public void resume(@Nullable XSuspendContext context) {
         myProtocolExecutor.execute(() -> {
-            mySuspended = false;
             try {
-                myClient.exitMonitor();
+                resumeExecution();
             } catch (IOException e) {
                 reportProtocolError(e);
             }
@@ -252,9 +256,15 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
     @Override
     public void startStepInto(@Nullable XSuspendContext context) {
         myProtocolExecutor.execute(() -> {
-            mySuspended = false;
-            myStepPending = true;
             try {
+                Integer atPc = breakpointCheckpointAt(currentPc());
+                if (atPc != null) {
+                    stepOff(atPc);          // the step-off is the whole step
+                    surfaceStop(null);
+                    return;
+                }
+                mySuspended = false;
+                myStepPending = true;
                 myClient.advanceInstructions(false, 1);
             } catch (IOException e) {
                 reportProtocolError(e);
@@ -265,19 +275,26 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
     @Override
     public void startStepOver(@Nullable XSuspendContext context) {
         myProtocolExecutor.execute(() -> {
-            mySuspended = false;
             try {
                 // Client-side step-over: VICE's own SO=1 tracks JSR/RTS
                 // nesting and misbehaves near autostart traps. A temporary
                 // checkpoint after the JSR is exact and IRQ-proof.
-                int pc = myClient.getRegisters().getOrDefault("PC", 0);
+                int pc = currentPc();
                 int opcode = myClient.readMemory(pc, pc)[0] & 0xff;
                 if (opcode == OPCODE_JSR) {
                     CheckpointInfo checkpoint =
                             myClient.setCheckpoint(pc + 3, pc + 3, ViceBinaryMonitorClient.OP_EXEC, true);
                     myStepCheckpoint = checkpoint.number();
-                    myClient.exitMonitor();
+                    myStepCheckpointAddress = pc + 3;
+                    resumeExecution();
                 } else {
+                    Integer atPc = breakpointCheckpointAt(pc);
+                    if (atPc != null) {
+                        stepOff(atPc);
+                        surfaceStop(null);
+                        return;
+                    }
+                    mySuspended = false;
                     myStepPending = true;
                     myClient.advanceInstructions(false, 1);
                 }
@@ -290,9 +307,24 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
     @Override
     public void startStepOut(@Nullable XSuspendContext context) {
         myProtocolExecutor.execute(() -> {
-            mySuspended = false;
-            myStepPending = true;
             try {
+                int pc = currentPc();
+                Integer atPc = breakpointCheckpointAt(pc);
+                if (atPc != null) {
+                    int opcode = myClient.readMemory(pc, pc)[0] & 0xff;
+                    stepOff(atPc);
+                    if (opcode == 0x60 || opcode == 0x40) {   // RTS / RTI
+                        surfaceStop(null);                    // already out
+                        return;
+                    }
+                    Integer landed = breakpointCheckpointAt(currentPc());
+                    if (landed != null) {
+                        surfaceStop(myCheckpointToBreakpoint.get(landed));
+                        return;
+                    }
+                }
+                mySuspended = false;
+                myStepPending = true;
                 myClient.executeUntilReturn();
             } catch (IOException e) {
                 reportProtocolError(e);
@@ -310,16 +342,96 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
                 getSession().positionReached(getSession().getSuspendContext());
                 return;
             }
-            mySuspended = false;
             try {
+                if (address.intValue() == currentPc()) {
+                    getSession().positionReached(getSession().getSuspendContext());
+                    return;
+                }
                 CheckpointInfo checkpoint = myClient.setCheckpoint(address.intValue(), address.intValue(),
                         ViceBinaryMonitorClient.OP_EXEC, true);
                 myStepCheckpoint = checkpoint.number();
-                myClient.exitMonitor();
+                myStepCheckpointAddress = address.intValue();
+                resumeExecution();
             } catch (IOException e) {
                 reportProtocolError(e);
             }
         });
+    }
+
+    // ---- checkpoint step-off (see FINDINGS.md gotcha 5) -------------------
+
+    /** Must run on the protocol executor with the machine stopped. */
+    private int currentPc() throws IOException {
+        return myClient.getRegisters().getOrDefault("PC", 0);
+    }
+
+    @Nullable
+    private Integer breakpointCheckpointAt(int pc) {
+        for (Map.Entry<Integer, Integer> entry : myCheckpointAddress.entrySet()) {
+            if (entry.getValue() == pc) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Executes one instruction with the given checkpoint disabled and blocks
+     * until the machine stops again. Resuming or stepping while an enabled
+     * exec checkpoint sits at the current PC — without it having just fired —
+     * stalls VICE: the resume consumes no instructions and later stops lose
+     * their checkpoint-hit correlation (verified against x64sc 3.10). So
+     * every continuation from such a position first steps off, GDB-style.
+     */
+    private void stepOff(int checkpointNumber) throws IOException {
+        CompletableFuture<Integer> stopped = new CompletableFuture<>();
+        myStepOffStop = stopped;
+        try {
+            myClient.toggleCheckpoint(checkpointNumber, false);
+            myClient.advanceInstructions(false, 1);
+            stopped.get(15, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while stepping off a breakpoint", e);
+        } catch (java.util.concurrent.ExecutionException | TimeoutException e) {
+            throw new IOException("No stop after stepping off a breakpoint", e);
+        } finally {
+            myStepOffStop = null;
+            try {
+                myClient.toggleCheckpoint(checkpointNumber, true);
+            } catch (IOException e) {
+                LOG.warn("Could not re-enable checkpoint " + checkpointNumber, e);
+            }
+        }
+    }
+
+    /**
+     * Free-running continuation from a stop: steps off a breakpoint
+     * checkpoint under the current PC if there is one, then resumes — unless
+     * the step-off already landed on the step/run-to-cursor target or on
+     * another breakpoint, which is surfaced instead (EXIT would stall on it).
+     */
+    private void resumeExecution() throws IOException {
+        Integer atPc = breakpointCheckpointAt(currentPc());
+        if (atPc != null) {
+            stepOff(atPc);
+            int landed = currentPc();
+            if (myStepCheckpoint >= 0 && landed == myStepCheckpointAddress) {
+                int number = myStepCheckpoint;
+                myStepCheckpoint = -1;
+                myStepCheckpointAddress = -1;
+                myClient.deleteCheckpoint(number);   // temporary, never fired
+                surfaceStop(null);
+                return;
+            }
+            Integer landedBreakpoint = breakpointCheckpointAt(landed);
+            if (landedBreakpoint != null) {
+                surfaceStop(myCheckpointToBreakpoint.get(landedBreakpoint));
+                return;
+            }
+        }
+        mySuspended = false;
+        myClient.exitMonitor();
     }
 
     // ---- monitor events (called on the client reader thread) ------------
@@ -333,6 +445,11 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
 
     @Override
     public void onStopped(int pc) {
+        CompletableFuture<Integer> stepOff = myStepOffStop;
+        if (stepOff != null) {
+            stepOff.complete(pc);   // consumed by the blocked step-off
+            return;
+        }
         int hitCheckpoint = myLastHitCheckpoint.getAndSet(-1);
         boolean stepDone = myStepPending;
         boolean pauseDone = myPauseRequested;
@@ -341,6 +458,7 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
         boolean surface;
         if (hitCheckpoint >= 0 && hitCheckpoint == myStepCheckpoint) {
             myStepCheckpoint = -1;                  // step-over / run-to-cursor landed
+            myStepCheckpointAddress = -1;
             surface = true;
         } else if (hitCheckpoint >= 0 && myCheckpointToBreakpoint.containsKey(hitCheckpoint)) {
             breakpoint = myCheckpointToBreakpoint.get(hitCheckpoint);
@@ -383,6 +501,7 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
             int staleStep = myStepCheckpoint;
             if (staleStep >= 0 && breakpoint != null) {
                 myStepCheckpoint = -1;
+                myStepCheckpointAddress = -1;
                 myClient.deleteCheckpoint(staleStep);
             }
             myStepPending = false;
@@ -391,7 +510,7 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
             Map<String, Integer> registers = myClient.getRegisters();
             int pc = registers.getOrDefault("PC", 0);
             XSourcePosition position = sourcePositionOf(pc);
-            AsmStackFrame frame = new AsmStackFrame(position, pc, registers);
+            AsmStackFrame frame = new AsmStackFrame(this, position, pc, registers);
             AsmSuspendContext suspendContext = new AsmSuspendContext(frame);
             mySuspended = true;
             if (breakpoint != null) {
@@ -462,6 +581,7 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
                 return;
             }
             myCheckpointToBreakpoint.remove(number);
+            myCheckpointAddress.remove(number);
             myProtocolExecutor.execute(() -> {
                 try {
                     myClient.deleteCheckpoint(number);
@@ -488,6 +608,7 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
                     ViceBinaryMonitorClient.OP_EXEC, false);
             myCheckpointToBreakpoint.put(checkpoint.number(), breakpoint);
             myBreakpointToCheckpoint.put(breakpoint, checkpoint.number());
+            myCheckpointAddress.put(checkpoint.number(), address.intValue());
             String condition = breakpoint.getConditionExpression() == null
                     ? null : breakpoint.getConditionExpression().getExpression();
             if (condition != null && !condition.isBlank()) {
@@ -527,6 +648,69 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
             address = myDbgInfo.getAddressForLine(path, zeroBasedLine + 1);
         }
         return address;
+    }
+
+    // ---- value access for the variables view / evaluator ------------------
+    // All only meaningful while suspended: a protocol command issued while
+    // the machine runs would trap it into the monitor (gotcha 4).
+
+    @NotNull
+    DbgInfo getDbgInfo() {
+        return myDbgInfo;
+    }
+
+    /** Reads one byte of memory and reports it (or an error) asynchronously. */
+    void readByte(int address, @NotNull java.util.function.IntConsumer onValue,
+                  @NotNull java.util.function.Consumer<String> onError) {
+        if (!mySuspended) {
+            onError.accept(Asm6502Bundle.message("DEBUG.value.running"));
+            return;
+        }
+        myProtocolExecutor.execute(() -> {
+            if (!mySuspended) {
+                onError.accept(Asm6502Bundle.message("DEBUG.value.running"));
+                return;
+            }
+            try {
+                onValue.accept(myClient.readMemory(address, address)[0] & 0xff);
+            } catch (IOException e) {
+                onError.accept(String.valueOf(e.getMessage()));
+            }
+        });
+    }
+
+    /** Writes one byte of memory and reports completion asynchronously. */
+    void writeByte(int address, int value, @NotNull Runnable onSuccess,
+                   @NotNull java.util.function.Consumer<String> onError) {
+        if (!mySuspended) {
+            onError.accept(Asm6502Bundle.message("DEBUG.value.running"));
+            return;
+        }
+        myProtocolExecutor.execute(() -> {
+            try {
+                myClient.writeMemory(address, new byte[]{(byte) value});
+                onSuccess.run();
+            } catch (IOException e) {
+                onError.accept(String.valueOf(e.getMessage()));
+            }
+        });
+    }
+
+    /** Sets a CPU register and reports completion asynchronously. */
+    void setRegisterValue(@NotNull String name, int value, @NotNull Runnable onSuccess,
+                          @NotNull java.util.function.Consumer<String> onError) {
+        if (!mySuspended) {
+            onError.accept(Asm6502Bundle.message("DEBUG.value.running"));
+            return;
+        }
+        myProtocolExecutor.execute(() -> {
+            try {
+                myClient.setRegister(name, value);
+                onSuccess.run();
+            } catch (IOException e) {
+                onError.accept(String.valueOf(e.getMessage()));
+            }
+        });
     }
 
     // ---- misc -------------------------------------------------------------

@@ -12,7 +12,7 @@ import org.ca65.Asm6502Bundle;
 import org.ca65.AsmIcons;
 import org.jetbrains.annotations.NotNull;
 
-/** "6502 Emulator" entry in Run | Edit Configurations | Add. */
+/** "6502 Program" entry in Run | Edit Configurations | Add. */
 public class Ca65RunConfigurationType extends ConfigurationTypeBase {
     public static final String ID = "Ca65RunConfiguration";
 

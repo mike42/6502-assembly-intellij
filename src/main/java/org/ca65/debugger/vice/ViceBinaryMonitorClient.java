@@ -36,11 +36,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 0xffffffff are asynchronous events, dispatched to the {@link EventListener}.
  * All request methods block and must not be called on the EDT.
  *
- * <p>Protocol quirks the caller must respect (verified by experiment, see
- * debugger-research/FINDINGS.md): any command traps the emulator into the
- * monitor — follow up with {@link #exitMonitor()} to keep it running; delete
- * all checkpoints before detaching or VICE wedges; STOPPED events are not
- * all user-relevant (autostart/reset produce transient stop/resume chatter).
+ * <p>Protocol quirks the caller must respect (verified by experiment: any
+ * command traps the emulator into the monitor — follow up with {@link #exitMonitor()}
+ * to keep it running; delete all checkpoints before detaching or VICE wedges;
+ * STOPPED events are not all user-relevant (autostart/reset produce
+ * transient stop/resume chatter).
  */
 public class ViceBinaryMonitorClient implements Closeable {
     // Commands
@@ -48,6 +48,7 @@ public class ViceBinaryMonitorClient implements Closeable {
     private static final int CMD_MEM_SET = 0x02;
     private static final int CMD_CHECKPOINT_SET = 0x12;
     private static final int CMD_CHECKPOINT_DELETE = 0x13;
+    private static final int CMD_CHECKPOINT_TOGGLE = 0x15;
     private static final int CMD_CONDITION_SET = 0x22;
     private static final int CMD_REGISTERS_GET = 0x31;
     private static final int CMD_REGISTERS_SET = 0x32;
@@ -277,6 +278,14 @@ public class ViceBinaryMonitorClient implements Closeable {
                 throw e;
             }
         }
+    }
+
+    /** Enables or disables a checkpoint without deleting it. */
+    public void toggleCheckpoint(int number, boolean enabled) throws IOException {
+        ByteArrayOutputStream body = new ByteArrayOutputStream();
+        writeU32(body, number);
+        body.write(enabled ? 1 : 0);
+        request(CMD_CHECKPOINT_TOGGLE, body.toByteArray());
     }
 
     /** Condition in VICE monitor expression syntax, e.g. {@code X == $05} or {@code @ram:($02) == $10}. */

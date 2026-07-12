@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * The default before-run step of {@link Ca65RunConfiguration}: build the
- * referenced build configuration and abort the launch if it fails.
+ * The default before-run step of {@link Ca65RunConfiguration}: build its
+ * embedded build settings and abort the launch if the build fails.
  */
 public class Ca65BuildBeforeRunTaskProvider
         extends BeforeRunTaskProvider<Ca65BuildBeforeRunTaskProvider.Task> {
@@ -59,14 +59,11 @@ public class Ca65BuildBeforeRunTaskProvider
         if (!(configuration instanceof Ca65RunConfiguration runConfiguration)) {
             return true;
         }
-        Ca65BuildConfiguration buildConfig = runConfiguration.findBuildConfiguration();
-        if (buildConfig == null) {
-            return false;
-        }
+        Ca65BuildConfiguration spec = runConfiguration.getBuildSpec();
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator == null) {
             indicator = new EmptyProgressIndicator();
         }
-        return Ca65BuildRunner.runBuild(environment.getProject(), buildConfig, indicator);
+        return Ca65BuildRunner.runBuild(environment.getProject(), spec, indicator);
     }
 }

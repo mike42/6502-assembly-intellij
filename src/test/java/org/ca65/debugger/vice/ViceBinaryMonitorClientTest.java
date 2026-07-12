@@ -77,6 +77,15 @@ public class ViceBinaryMonitorClientTest {
     }
 
     @Test
+    public void checkpointToggleSendsNumberAndFlag() throws Exception {
+        myClient.toggleCheckpoint(7, false);
+        assertEquals(0x15, myServer.lastCommand());
+        assertArrayEquals(new byte[]{7, 0, 0, 0, 0}, myServer.lastBody());
+        myClient.toggleCheckpoint(7, true);
+        assertArrayEquals(new byte[]{7, 0, 0, 0, 1}, myServer.lastBody());
+    }
+
+    @Test
     public void memoryRead() throws Exception {
         byte[] data = myClient.readMemory(0xc000, 0xc003);
         assertArrayEquals(new byte[]{0x20, 0x10, (byte) 0xc0, 0x60}, data);
@@ -108,6 +117,7 @@ public class ViceBinaryMonitorClientTest {
         private final Thread myThread;
         private volatile Socket mySocket;
         private volatile int myLastCommand = -1;
+        private volatile byte[] myLastBody = new byte[0];
 
         FakeViceServer() throws IOException {
             myServerSocket = new ServerSocket(0);
@@ -124,6 +134,10 @@ public class ViceBinaryMonitorClientTest {
             return myLastCommand;
         }
 
+        byte[] lastBody() {
+            return myLastBody;
+        }
+
         private void serve() {
             try {
                 mySocket = myServerSocket.accept();
@@ -137,6 +151,7 @@ public class ViceBinaryMonitorClientTest {
                     byte[] body = new byte[bodyLength];
                     in.readFully(body);
                     myLastCommand = command;
+                    myLastBody = body;
                     respond(command, requestId, body);
                 }
             } catch (IOException ignored) {

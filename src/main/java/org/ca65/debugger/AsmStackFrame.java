@@ -4,43 +4,52 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueNode;
-import com.intellij.xdebugger.frame.XValuePlace;
+import com.intellij.xdebugger.frame.XValueGroup;
+import org.ca65.Asm6502Bundle;
+import org.ca65.dbginfo.DbgInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * The single (top) frame of a stopped 6502: source position from the .dbg
- * line table, register values as children. 6502 code has no reliable call
- * frames without heuristics, so deeper frames are not synthesized yet.
+ * line table, registers and .dbg symbols as children. 6502 code has no
+ * reliable call frames without heuristics, so deeper frames are not
+ * synthesized yet.
  */
 public class AsmStackFrame extends XStackFrame {
     /** Registers shown first, in this order; anything else follows. */
     private static final List<String> PRIMARY_REGISTERS = List.of("A", "X", "Y", "SP", "PC", "FL");
-    private static final String[] FLAG_NAMES = {"N", "V", "-", "B", "D", "I", "Z", "C"};
 
+    private final AsmDebugProcess myProcess;
     private final @Nullable XSourcePosition mySourcePosition;
     private final int myPc;
     private final Map<String, Integer> myRegisters;
 
-    public AsmStackFrame(@Nullable XSourcePosition sourcePosition, int pc,
-                         @NotNull Map<String, Integer> registers) {
+    public AsmStackFrame(@NotNull AsmDebugProcess process, @Nullable XSourcePosition sourcePosition,
+                         int pc, @NotNull Map<String, Integer> registers) {
+        myProcess = process;
         mySourcePosition = sourcePosition;
         myPc = pc;
-        myRegisters = registers;
+        myRegisters = new LinkedHashMap<>(registers);
     }
 
     @Override
     public @Nullable XSourcePosition getSourcePosition() {
         return mySourcePosition;
+    }
+
+    @Override
+    public @Nullable XDebuggerEvaluator getEvaluator() {
+        return new AsmDebuggerEvaluator(myProcess, myRegisters);
     }
 
     @Override
@@ -61,45 +70,35 @@ public class AsmStackFrame extends XStackFrame {
         XValueChildrenList children = new XValueChildrenList();
         Map<String, Integer> remaining = new LinkedHashMap<>(myRegisters);
         for (String name : PRIMARY_REGISTERS) {
-            Integer value = remaining.remove(name);
-            if (value != null) {
-                children.add(new RegisterValue(name, value));
+            if (remaining.remove(name) != null) {
+                children.add(new AsmRegisterValue(name, myProcess, myRegisters));
             }
         }
-        for (Map.Entry<String, Integer> entry : remaining.entrySet()) {
-            children.add(new RegisterValue(entry.getKey(), entry.getValue()));
+        for (String name : remaining.keySet()) {
+            children.add(new AsmRegisterValue(name, myProcess, myRegisters));
         }
+        children.addBottomGroup(new SymbolsGroup());
         node.addChildren(children, true);
     }
 
-    private static final class RegisterValue extends XNamedValue {
-        private final int myValue;
-
-        RegisterValue(@NotNull String name, int value) {
-            super(name);
-            myValue = value;
+    /** All addressable symbols from the .dbg file, with live memory bytes. */
+    private final class SymbolsGroup extends XValueGroup {
+        SymbolsGroup() {
+            super(Asm6502Bundle.message("DEBUG.group.symbols"));
         }
 
         @Override
-        public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-            String text;
-            if ("FL".equals(getName())) {
-                text = String.format("$%02x %s", myValue, describeFlags(myValue));
-            } else if ("PC".equals(getName()) || myValue > 0xff) {
-                text = String.format("$%04x (%d)", myValue, myValue);
-            } else {
-                text = String.format("$%02x (%d)", myValue, myValue);
+        public void computeChildren(@NotNull XCompositeNode node) {
+            List<DbgInfo.Symbol> symbols =
+                    new ArrayList<>(myProcess.getDbgInfo().getSymbols().values());
+            symbols.sort((a, b) -> a.name().compareToIgnoreCase(b.name()));
+            XValueChildrenList children = new XValueChildrenList();
+            for (DbgInfo.Symbol symbol : symbols) {
+                if (symbol.value() >= 0 && symbol.value() <= 0xffff) {
+                    children.add(new AsmMemoryValue(symbol.name(), myProcess, (int) symbol.value()));
+                }
             }
-            node.setPresentation(AllIcons.Debugger.Value, null, text, false);
-        }
-
-        private static String describeFlags(int flags) {
-            StringBuilder text = new StringBuilder();
-            for (int bit = 7; bit >= 0; bit--) {
-                String name = FLAG_NAMES[7 - bit];
-                text.append((flags & (1 << bit)) != 0 ? name : name.toLowerCase());
-            }
-            return text.toString();
+            node.addChildren(children, true);
         }
     }
 }
