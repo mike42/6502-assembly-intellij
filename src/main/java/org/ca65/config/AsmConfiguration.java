@@ -5,6 +5,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.XMap;
+import org.ca65.buildcfg.Ca65ActiveConfiguration;
+import org.ca65.buildcfg.Ca65BuildConfiguration;
+import org.ca65.buildcfg.Ca65TargetSystem;
 import org.ca65.helpers.Cpu;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +23,11 @@ public class AsmConfiguration implements PersistentStateComponent<AsmConfigurati
     }
 
     private AsmConfiguration.State myState = new State();
+    private final Project myProject;
+
+    public AsmConfiguration(Project project) {
+        myProject = project;
+    }
 
     public static AsmConfiguration getInstance(Project project) {
         return project.getService(AsmConfiguration.class);
@@ -35,7 +43,23 @@ public class AsmConfiguration implements PersistentStateComponent<AsmConfigurati
         myState = state;
     }
 
+    /**
+     * The CPU the editor should assume, layered: the active build
+     * configuration's CPU when one exists, else the manually chosen value.
+     */
     public Cpu getCpu() {
+        if (myProject != null && !myProject.isDisposed()) {
+            Ca65BuildConfiguration active =
+                    Ca65ActiveConfiguration.getInstance(myProject).getActiveConfiguration();
+            if (active != null) {
+                return Ca65TargetSystem.editorCpuFor(active.getEffectiveCpuName());
+            }
+        }
+        return getManualCpu();
+    }
+
+    /** The manually chosen CPU, ignoring build configurations. */
+    public Cpu getManualCpu() {
         for (Cpu item : Cpu.values()) {
             if (item.toString().equals(this.myState.cpu)) {
                 return item;

@@ -14,6 +14,19 @@
        on how to target different products -->
   <depends>com.intellij.modules.platform</depends>
 
+  <resource-bundle>messages.Asm6502Bundle</resource-bundle>
+
+  <extensionPoints>
+    <!-- Plugin-internal: emulator integrations register here so run/debug
+         UI can filter by target system instead of listing every emulator. -->
+    <extensionPoint qualifiedName="org.ca65.emulatorProvider"
+                    interface="org.ca65.run.EmulatorProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.ca65">
+    <emulatorProvider implementation="org.ca65.run.ViceEmulatorProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="6502 Assembly" implementationClass="org.ca65.AsmFileType" fieldName="INSTANCE"
               language="6502 Assembly" extensions="s;asm;inc;mac"/>
@@ -47,6 +60,22 @@
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmZilogHexAnnotator"/>
     <annotator language="6502 Assembly" implementationClass="org.ca65.annotator.AsmShortLabelRefAnnotator"/>
     <projectService serviceImplementation="org.ca65.config.AsmConfiguration" />
+    <applicationService serviceImplementation="org.ca65.toolchain.Cc65ToolchainService" />
+    <projectService serviceImplementation="org.ca65.buildcfg.Ca65BuildSettings" />
+    <projectService serviceImplementation="org.ca65.buildcfg.Ca65ActiveConfiguration" />
+    <applicationConfigurable parentId="build" id="org.ca65.toolchains"
+                             instance="org.ca65.toolchain.Cc65ToolchainConfigurable"
+                             key="SETTINGS.toolchains.title" bundle="messages.Asm6502Bundle"/>
+    <projectConfigurable parentId="build" id="org.ca65.buildConfigurations"
+                         instance="org.ca65.buildcfg.Ca65BuildConfigurable"
+                         key="SETTINGS.build.title" bundle="messages.Asm6502Bundle"/>
+    <configurationType implementation="org.ca65.run.Ca65RunConfigurationType"/>
+    <stepsBeforeRunProvider implementation="org.ca65.run.Ca65BuildBeforeRunTaskProvider"/>
+    <xdebugger.breakpointType implementation="org.ca65.debugger.AsmLineBreakpointType"/>
+    <programRunner implementation="org.ca65.debugger.Ca65DebugRunner"/>
+    <statusBarWidgetFactory id="Asm6502Cpu"
+                            implementation="org.ca65.status.AsmCpuStatusBarWidgetFactory"
+                            order="after Encoding"/>
     <lang.documentationProvider language="6502 Assembly" implementationClass="org.ca65.AsmDocumentationProvider"/>
     <psi.referenceContributor language="6502 Assembly" implementation="org.ca65.AsmIncludeReferenceContributor"/>
     <codeInsight.declarativeInlayProvider language="6502 Assembly"
@@ -75,7 +104,18 @@
   </extensions>
 
   <actions>
-    <!-- Add your actions here -->
+    <!-- ToolsMenu rather than BuildMenu: the Build menu does not exist in
+         all JetBrains IDEs (e.g. PyCharm), and referencing a missing group
+         is reported as a plugin error. -->
+    <action id="org.ca65.buildcfg.Ca65BuildAction" class="org.ca65.buildcfg.Ca65BuildAction"
+            icon="AllIcons.Actions.Compile">
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+      <!-- Hammer button next to the run widget; the action hides itself on
+           toolbars unless the project has a 6502 build configuration.
+           MainToolbarRight is the new UI, MainToolBar the classic UI. -->
+      <add-to-group group-id="MainToolbarRight" anchor="first"/>
+      <add-to-group group-id="MainToolBar" anchor="last"/>
+    </action>
   </actions>
 
 </idea-plugin>
