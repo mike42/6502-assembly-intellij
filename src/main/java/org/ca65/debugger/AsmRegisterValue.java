@@ -21,12 +21,20 @@ class AsmRegisterValue extends XNamedValue {
 
     private final AsmDebugProcess myProcess;
     private final Map<String, Integer> myRegisters;
+    /** Short explanation shown in the type slot (for machine-specific registers). */
+    private final @Nullable String myDescription;
 
     AsmRegisterValue(@NotNull String name, @NotNull AsmDebugProcess process,
                      @NotNull Map<String, Integer> registers) {
+        this(name, process, registers, null);
+    }
+
+    AsmRegisterValue(@NotNull String name, @NotNull AsmDebugProcess process,
+                     @NotNull Map<String, Integer> registers, @Nullable String description) {
         super(name);
         myProcess = process;
         myRegisters = registers;
+        myDescription = description;
     }
 
     @Override
@@ -40,7 +48,7 @@ class AsmRegisterValue extends XNamedValue {
         } else {
             text = String.format("$%02x (%d)", value, value);
         }
-        node.setPresentation(AllIcons.Debugger.Value, null, text, false);
+        node.setPresentation(AllIcons.Debugger.Value, myDescription, text, false);
     }
 
     @Override

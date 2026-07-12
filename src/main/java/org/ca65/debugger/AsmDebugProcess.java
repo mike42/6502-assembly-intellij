@@ -10,23 +10,31 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.ca65.Asm6502Bundle;
 import org.ca65.buildcfg.Ca65BuildConfiguration;
 import org.ca65.buildcfg.Ca65BuildPaths;
 import org.ca65.buildcfg.Ca65TargetSystem;
 import org.ca65.dbginfo.DbgInfo;
+import org.ca65.debugger.decode.AddressingMode;
+import org.ca65.debugger.decode.InstructionDecoder;
+import org.ca65.debugger.decode.InstructionDecoders;
 import org.ca65.debugger.vice.ViceBinaryMonitorClient;
 import org.ca65.debugger.vice.ViceBinaryMonitorClient.CheckpointInfo;
 import org.ca65.run.Ca65RunConfiguration;
@@ -41,14 +49,19 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Debug session against an emulator's VICE binary monitor.
@@ -67,10 +80,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorClient.EventListener {
     private static final Logger LOG = Logger.getInstance(AsmDebugProcess.class);
     private static final int OPCODE_JSR = 0x20;
+    private static final Pattern INLAY_IDENTIFIER = Pattern.compile("[A-Za-z_@][A-Za-z0-9_@]*");
+    private static final Pattern INLAY_INDEX_REGISTER = Pattern.compile(",\\s*([xyXY])\\b");
 
     private final Ca65BuildConfiguration myBuildConfig;
     private final String myBasePath;
     private final DbgInfo myDbgInfo;
+    /** Null when the configured CPU has no instruction decoder yet (e.g. 65816). */
+    private final @Nullable InstructionDecoder myDecoder;
+    private final AsmDebugInlays myInlays;
     private final int myPort;
     private final KillableProcessHandler myEmulatorHandler;
     private final AsmDebuggerEditorsProvider myEditorsProvider = new AsmDebuggerEditorsProvider();
@@ -134,6 +152,8 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
         if (!binary.isFile()) {
             throw new ExecutionException(Asm6502Bundle.message("RUN.error.binary.missing", binary.getPath()));
         }
+        myDecoder = InstructionDecoders.forCpuName(myBuildConfig.getEffectiveCpuName());
+        myInlays = new AsmDebugInlays(runConfiguration.getProject());
         myPort = findFreePort();
         File labelFile = Ca65BuildPaths.labelFile(myBasePath, myBuildConfig);
         EmulatorLaunchRequest request = new EmulatorLaunchRequest(system, binary.getAbsolutePath(),
@@ -157,6 +177,17 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
 
     @Override
     public void sessionInitialized() {
+        getSession().addSessionListener(new XDebugSessionListener() {
+            @Override
+            public void sessionResumed() {
+                myInlays.clear();
+            }
+
+            @Override
+            public void sessionStopped() {
+                myInlays.clear();
+            }
+        });
         myProtocolExecutor.execute(this::connectAndLaunch);
     }
 
@@ -358,7 +389,7 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
         });
     }
 
-    // ---- checkpoint step-off (see FINDINGS.md gotcha 5) -------------------
+    // ---- checkpoint step-off ----------------------------------------------
 
     /** Must run on the protocol executor with the machine stopped. */
     private int currentPc() throws IOException {
@@ -510,21 +541,167 @@ public class AsmDebugProcess extends XDebugProcess implements ViceBinaryMonitorC
             Map<String, Integer> registers = myClient.getRegisters();
             int pc = registers.getOrDefault("PC", 0);
             XSourcePosition position = sourcePositionOf(pc);
-            AsmStackFrame frame = new AsmStackFrame(this, position, pc, registers);
-            AsmSuspendContext suspendContext = new AsmSuspendContext(frame);
+            InstructionPresentation instruction = decodeInstructionAt(pc, registers);
+            StackScanner.ScanResult scan = scanStack(registers);
+            AsmStackFrame frame = new AsmStackFrame(this, position, pc, registers,
+                    myDbgInfo.getLabelForAddress(pc), instruction,
+                    scan.topOwnedFrom(), scan.topOwnedBytes());
+            AsmSuspendContext suspendContext = new AsmSuspendContext(frame, buildCallerFrames(scan));
             mySuspended = true;
+            boolean suspended = true;
             if (breakpoint != null) {
                 boolean shouldSuspend = getSession().breakpointReached(breakpoint, null, suspendContext);
                 if (!shouldSuspend) {
                     mySuspended = false;
+                    suspended = false;
                     myClient.exitMonitor();
                 }
             } else {
                 getSession().positionReached(suspendContext);
             }
+            if (suspended && position != null) {
+                String inlayText = buildInlayText(position, registers, instruction);
+                if (inlayText != null) {
+                    myInlays.show(position, inlayText);
+                }
+            }
         } catch (IOException e) {
             reportProtocolError(e);
         }
+    }
+
+    /** Decodes the instruction at the stop's PC for display; null-safe throughout. */
+    @Nullable
+    private InstructionPresentation decodeInstructionAt(int pc, Map<String, Integer> registers) {
+        if (myDecoder == null) {
+            return null;
+        }
+        try {
+            byte[] bytes = myClient.readMemory(pc, Math.min(pc + 2, 0xffff));
+            InstructionDecoder.DecodedInstruction decoded = myDecoder.decode(bytes[0] & 0xff,
+                    bytes.length > 1 ? bytes[1] & 0xff : 0, bytes.length > 2 ? bytes[2] & 0xff : 0);
+            if (decoded == null) {
+                return null;
+            }
+            InstructionDecoder.MemoryReader memory =
+                    address -> myClient.readMemory(address, address)[0] & 0xff;
+            Integer effective = myDecoder.effectiveAddress(decoded, pc, registers, memory);
+            String annotation = myDecoder.describeOperand(decoded, pc, registers, memory);
+            // a control-flow target is code — presenting its byte as a value
+            // would be noise
+            boolean controlFlow = myDecoder.isControlFlow(decoded);
+            Integer value = effective == null || controlFlow ? null
+                    : myClient.readMemory(effective, effective)[0] & 0xff;
+            boolean directDataAccess = !controlFlow
+                    && (decoded.mode() == AddressingMode.ZERO_PAGE
+                    || decoded.mode() == AddressingMode.ABSOLUTE);
+            return new InstructionPresentation(myDecoder.format(decoded, pc),
+                    decoded.mode().getDisplayName(), annotation, effective, value, directDataAccess);
+        } catch (IOException e) {
+            LOG.warn("Could not decode instruction at $" + Integer.toHexString(pc), e);
+            return null;
+        }
+    }
+
+    /** Detects caller frames on the hardware stack; empty on any failure. */
+    @NotNull
+    private StackScanner.ScanResult scanStack(Map<String, Integer> registers) {
+        try {
+            int sp = registers.getOrDefault("SP", 0xff) & 0xff;
+            if (sp >= 0xfe) {
+                return StackScanner.ScanResult.EMPTY;
+            }
+            byte[] page = myClient.readMemory(0x0100, 0x01ff);
+            return StackScanner.scan(page, sp,
+                    address -> myClient.readMemory(address, address)[0] & 0xff,
+                    address -> myDbgInfo.getPositionForAddress(address) != null, 16);
+        } catch (IOException e) {
+            LOG.warn("Stack scan failed", e);
+            return StackScanner.ScanResult.EMPTY;
+        }
+    }
+
+    @NotNull
+    private List<XStackFrame> buildCallerFrames(@NotNull StackScanner.ScanResult scan) {
+        List<XStackFrame> frames = new ArrayList<>();
+        for (StackScanner.CallerFrame caller : scan.frames()) {
+            frames.add(new AsmCallerFrame(this, caller,
+                    myDbgInfo.getLabelForAddress(caller.jsrAddress()),
+                    myDbgInfo.getLabelForAddress(caller.returnTo()),
+                    sourcePositionOf(caller.jsrAddress())));
+        }
+        return frames;
+    }
+
+    /** "name=$xx" parts for symbols and index registers used on the stopped line. */
+    @Nullable
+    private String buildInlayText(@NotNull XSourcePosition position, @NotNull Map<String, Integer> registers,
+                                  @Nullable InstructionPresentation instruction) {
+        String lineText = ReadAction.compute(() -> {
+            Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
+            if (document == null || position.getLine() >= document.getLineCount()) {
+                return null;
+            }
+            return document.getText(new TextRange(document.getLineStartOffset(position.getLine()),
+                    document.getLineEndOffset(position.getLine())));
+        });
+        if (lineText == null) {
+            return null;
+        }
+        int comment = lineText.indexOf(';');
+        if (comment >= 0) {
+            lineText = lineText.substring(0, comment);
+        }
+        List<String> parts = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        boolean effectiveShownViaSymbol = false;
+        Matcher identifiers = INLAY_IDENTIFIER.matcher(lineText);
+        while (identifiers.find() && parts.size() < 4) {
+            String name = identifiers.group();
+            if (!seen.add(name)) {
+                continue;
+            }
+            DbgInfo.Symbol symbol = myDbgInfo.getSymbol(name);
+            if (symbol == null || symbol.value() < 0 || symbol.value() > 0xffff) {
+                continue;
+            }
+            int address = (int) symbol.value();
+            // Dereference only when the symbol IS the accessed variable
+            // (plain zp/abs data instruction hitting exactly this address).
+            // In every other role — jump/branch target, indexed base,
+            // immediate — the symbol stands for its 16-bit value.
+            boolean variableAccess = instruction != null && instruction.directDataAccess()
+                    && instruction.effectiveAddress() != null
+                    && instruction.effectiveAddress() == address;
+            if (variableAccess) {
+                try {
+                    int value = myClient.readMemory(address, address)[0] & 0xff;
+                    parts.add(String.format("%s=$%02x", name, value));
+                    effectiveShownViaSymbol = true;
+                } catch (IOException e) {
+                    LOG.warn("Could not read " + name, e);
+                }
+            } else {
+                parts.add(address <= 0xff
+                        ? String.format("%s=$%02x", name, address)
+                        : String.format("%s=$%04x", name, address));
+            }
+        }
+        Matcher index = INLAY_INDEX_REGISTER.matcher(lineText);
+        while (index.find()) {
+            String register = index.group(1).toUpperCase(Locale.ROOT);
+            Integer value = registers.get(register);
+            String part = value == null ? null : String.format("%s=$%02x", register, value);
+            if (part != null && !parts.contains(part)) {
+                parts.add(part);
+            }
+        }
+        if (instruction != null && instruction.effectiveAddress() != null
+                && instruction.effectiveValue() != null && !effectiveShownViaSymbol) {
+            parts.add(String.format("→ $%04x=$%02x",
+                    instruction.effectiveAddress(), instruction.effectiveValue()));
+        }
+        return parts.isEmpty() ? null : String.join("  ", parts);
     }
 
     @Nullable
