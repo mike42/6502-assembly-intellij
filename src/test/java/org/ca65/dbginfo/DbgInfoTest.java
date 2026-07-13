@@ -87,4 +87,17 @@ public class DbgInfoTest {
 
         assertNull(myDbgInfo.getSymbol("nonexistent"));
     }
+
+    @Test
+    public void labelForAddressFindsExactAndOffsetMatches() {
+        assertEquals("loop", myDbgInfo.getLabelForAddress(0x081F));
+        assertEquals("loop+2", myDbgInfo.getLabelForAddress(0x0821));
+        assertEquals("print", myDbgInfo.getLabelForAddress(0x0810));
+    }
+
+    @Test
+    public void labelForAddressRejectsDistantAndUnreachedAddresses() {
+        assertNull(myDbgInfo.getLabelForAddress(0x0100));   // below the first label
+        assertNull(myDbgInfo.getLabelForAddress(0xFFD2));   // ROM, > 4 KiB past the last label
+    }
 }

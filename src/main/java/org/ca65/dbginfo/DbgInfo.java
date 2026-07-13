@@ -44,6 +44,8 @@ public final class DbgInfo {
     /** All code ranges, sorted by start address. */
     private final List<CodeRange> myRanges;
     private final Map<String, Symbol> mySymbols;
+    /** Symbols of type "lab", sorted by address, for reverse lookup. */
+    private final List<Symbol> myLabelsByAddress;
 
     private DbgInfo(Map<Integer, String> fileNames, Map<Integer, Map<Integer, Long>> lineToAddress,
                     List<CodeRange> ranges, Map<String, Symbol> symbols) {
@@ -51,6 +53,13 @@ public final class DbgInfo {
         myLineToAddress = lineToAddress;
         myRanges = ranges;
         mySymbols = symbols;
+        myLabelsByAddress = new ArrayList<>();
+        for (Symbol symbol : symbols.values()) {
+            if ("lab".equals(symbol.type())) {
+                myLabelsByAddress.add(symbol);
+            }
+        }
+        myLabelsByAddress.sort((a, b) -> Long.compare(a.value(), b.value()));
     }
 
     @NotNull
@@ -186,6 +195,27 @@ public final class DbgInfo {
     @NotNull
     public Map<String, Symbol> getSymbols() {
         return mySymbols;
+    }
+
+    /**
+     * Name of the nearest label at or below the address — {@code "name"} or
+     * {@code "name+offset"} — or null when no label is within 4 KiB (e.g.
+     * ROM addresses). Used to title synthetic stack frames.
+     */
+    @Nullable
+    public String getLabelForAddress(long address) {
+        Symbol best = null;
+        for (Symbol label : myLabelsByAddress) {
+            if (label.value() > address) {
+                break;
+            }
+            best = label;
+        }
+        if (best == null || address - best.value() > 0x1000) {
+            return null;
+        }
+        long offset = address - best.value();
+        return offset == 0 ? best.name() : best.name() + "+" + offset;
     }
 
     /**

@@ -6,13 +6,17 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AsmSuspendContext extends XSuspendContext {
     private final AsmExecutionStack myStack;
 
-    public AsmSuspendContext(@NotNull AsmStackFrame topFrame) {
-        myStack = new AsmExecutionStack(topFrame);
+    public AsmSuspendContext(@NotNull AsmStackFrame topFrame, @NotNull List<XStackFrame> callerFrames) {
+        List<XStackFrame> frames = new ArrayList<>();
+        frames.add(topFrame);
+        frames.addAll(callerFrames);
+        myStack = new AsmExecutionStack(frames);
     }
 
     @Override
@@ -21,21 +25,22 @@ public class AsmSuspendContext extends XSuspendContext {
     }
 
     private static final class AsmExecutionStack extends XExecutionStack {
-        private final AsmStackFrame myTopFrame;
+        private final List<XStackFrame> myFrames;
 
-        AsmExecutionStack(@NotNull AsmStackFrame topFrame) {
+        AsmExecutionStack(@NotNull List<XStackFrame> frames) {
             super("6502");
-            myTopFrame = topFrame;
+            myFrames = frames;
         }
 
         @Override
         public @Nullable XStackFrame getTopFrame() {
-            return myTopFrame;
+            return myFrames.get(0);
         }
 
         @Override
         public void computeStackFrames(int firstFrameIndex, @NotNull XStackFrameContainer container) {
-            container.addStackFrames(firstFrameIndex == 0 ? List.of(myTopFrame) : List.of(), true);
+            container.addStackFrames(firstFrameIndex < myFrames.size()
+                    ? myFrames.subList(firstFrameIndex, myFrames.size()) : List.of(), true);
         }
     }
 }
