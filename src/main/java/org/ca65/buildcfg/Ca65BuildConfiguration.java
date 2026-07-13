@@ -35,7 +35,12 @@ public class Ca65BuildConfiguration {
      */
     public String targetSystem = Ca65TargetSystem.C64.id;
 
-    /** Project-relative path of a custom ld65 .cfg; used when targetSystem is unset. */
+    /**
+     * Project-relative path of a custom ld65 .cfg. Required when targetSystem
+     * is unset; for a built-in target it optionally overrides the target's
+     * default linker config (the target still drives CPU default, output
+     * extension and emulator choice).
+     */
     public String customConfigFile = "";
 
     /** ca65 --cpu name; empty means "derive from the target system". */
@@ -54,6 +59,10 @@ public class Ca65BuildConfiguration {
 
     public boolean isCustomTarget() {
         return targetSystem == null || targetSystem.isBlank();
+    }
+
+    public boolean hasCustomConfigFile() {
+        return customConfigFile != null && !customConfigFile.isBlank();
     }
 
     @Nullable

@@ -4,9 +4,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.util.execution.ParametersListUtil;
 import org.ca65.buildcfg.Ca65TargetSystem;
+import org.ca65.debugger.backend.DebuggerBackend;
+import org.ca65.debugger.vice.ViceDebuggerBackend;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -86,5 +89,13 @@ public class ViceEmulatorProvider implements EmulatorProvider {
         commandLine.addParameters("-binarymonitor",
                 "-binarymonitoraddress", "ip4://127.0.0.1:" + debugPort);
         return commandLine;
+    }
+
+    @Override
+    public @NotNull DebuggerBackend connectDebugger(@NotNull EmulatorLaunchRequest request, int debugPort,
+                                                    @NotNull DebuggerBackend.Listener listener,
+                                                    long timeoutMillis) throws IOException {
+        return ViceDebuggerBackend.connect("127.0.0.1", debugPort, listener, timeoutMillis,
+                request.binaryPath());
     }
 }

@@ -159,6 +159,10 @@ public class Ca65RunConfiguration extends RunConfigurationBase<Object> {
             protected @NotNull ProcessHandler startProcess() throws ExecutionException {
                 GeneralCommandLine commandLine = createEmulatorCommandLine();
                 KillableProcessHandler handler = new KillableProcessHandler(commandLine);
+                EmulatorProvider provider = EmulatorProvider.findById(myEmulatorId);
+                if (provider != null && !provider.supportsSoftKill()) {
+                    handler.setShouldKillProcessSoftly(false);
+                }
                 ProcessTerminatedListener.attach(handler);
                 return handler;
             }

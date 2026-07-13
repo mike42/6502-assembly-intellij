@@ -68,6 +68,29 @@ public class Ca65CommandBuilderTest {
     }
 
     @Test
+    public void customConfigOverridesBuiltinTargetDefault() {
+        Ca65BuildConfiguration config = c64Config();
+        config.targetSystem = Ca65TargetSystem.NES.id;
+        config.customConfigFile = "table_tennis.cfg";
+        List<String> argv = Ca65CommandBuilder.build(config, "").get(1).argv();
+        assertEquals(List.of("ld65", "-C", "table_tennis.cfg", "-o", "build/hello/hello.nes",
+                        "--dbgfile", "build/hello/hello.dbg",
+                        "-Ln", "build/hello/hello.lbl",
+                        "build/hello/hello.o"),
+                argv);
+    }
+
+    @Test
+    public void customConfigWinsOverShippedAsmConfig() {
+        Ca65BuildConfiguration config = c64Config();
+        config.customConfigFile = "conf/my-c64.cfg";
+        List<String> argv = Ca65CommandBuilder.build(config, "").get(1).argv();
+        assertEquals("-C", argv.get(1));
+        assertEquals("conf/my-c64.cfg", argv.get(2));
+        assertEquals(-1, argv.indexOf("c64-asm.cfg"));
+    }
+
+    @Test
     public void cpuOverrideOnBuiltinTargetIsUsed() {
         Ca65BuildConfiguration config = c64Config();
         config.cpu = "6502X";

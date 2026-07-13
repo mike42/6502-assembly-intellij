@@ -25,6 +25,7 @@
 
   <extensions defaultExtensionNs="org.ca65">
     <emulatorProvider implementation="org.ca65.run.ViceEmulatorProvider"/>
+    <emulatorProvider implementation="org.ca65.run.MameEmulatorProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
