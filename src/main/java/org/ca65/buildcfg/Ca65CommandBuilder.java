@@ -58,7 +58,10 @@ public final class Ca65CommandBuilder {
         List<String> argv = new ArrayList<>();
         argv.add(Cc65ToolchainService.getToolPath(toolchainBinDir, "ld65"));
         Ca65TargetSystem system = config.getTargetSystemEnum();
-        if (system == null) {
+        if (config.hasCustomConfigFile() || system == null) {
+            // A custom config is mandatory without a target system and
+            // overrides the target's default otherwise; the target still
+            // supplies the CPU default and narrows the emulator list.
             argv.add("-C");
             argv.add(config.customConfigFile);
         } else if (system.getAsmConfigName() != null) {

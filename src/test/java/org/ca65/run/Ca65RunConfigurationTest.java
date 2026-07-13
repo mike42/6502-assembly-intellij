@@ -93,6 +93,71 @@ public class Ca65RunConfigurationTest extends BasePlatformTestCase {
         }
     }
 
+    public void testCustomLinkerConfigOnBuiltinTargetCanRunOnEmulator() throws Exception {
+        Ca65RunConfiguration configuration = newC64Configuration();
+        configuration.getBuildSpec().customConfigFile = "conf/game.cfg";
+        configuration.checkConfiguration();
+    }
+
+    private Ca65RunConfiguration newNesConfiguration() {
+        Ca65RunConfiguration configuration = newC64Configuration();
+        Ca65BuildConfiguration spec = configuration.getBuildSpec();
+        spec.targetSystem = Ca65TargetSystem.NES.id;
+        spec.customConfigFile = "table_tennis.cfg";
+        configuration.setEmulatorId(MameEmulatorProvider.ID);
+        return configuration;
+    }
+
+    public void testMameCommandLineLoadsCartridge() throws Exception {
+        Ca65RunConfiguration configuration = newNesConfiguration();
+        String basePath = getProject().getBasePath();
+        assertNotNull(basePath);
+        File binary = Ca65BuildPaths.binaryFile(basePath, configuration.getBuildSpec());
+        assertTrue(binary.getParentFile().isDirectory() || binary.getParentFile().mkdirs());
+        Files.write(binary.toPath(), new byte[]{0x4e, 0x45, 0x53, 0x1a});
+
+        GeneralCommandLine commandLine = configuration.createEmulatorCommandLine();
+
+        assertEquals("mame", commandLine.getExePath());
+        assertEquals(List.of("famicomo", "-window", "-nomouse",
+                "-cart", binary.getAbsolutePath()), commandLine.getParametersList().getList());
+    }
+
+    public void testMameDebugCommandLineEnablesGdbStub() throws Exception {
+        EmulatorProvider provider = EmulatorProvider.findById(MameEmulatorProvider.ID);
+        assertNotNull(provider);
+        EmulatorLaunchRequest request = new EmulatorLaunchRequest(Ca65TargetSystem.NES,
+                "/tmp/game.nes", null, "", "");
+        GeneralCommandLine commandLine = provider.createDebugCommandLine(request, 2159);
+        assertEquals(List.of("famicomo", "-window", "-nomouse",
+                "-debug", "-debugger", "gdbstub",
+                "-debugger_port", "2159", "-debugger_host", "127.0.0.1",
+                "-cart", "/tmp/game.nes"), commandLine.getParametersList().getList());
+    }
+
+    public void testMameOnNesIsDebuggable() {
+        Ca65RunConfiguration configuration = newNesConfiguration();
+        assertTrue(configuration.isDebuggable());
+    }
+
+    public void testMameSkipsSoftKillOnStop() {
+        EmulatorProvider mame = EmulatorProvider.findById(MameEmulatorProvider.ID);
+        assertNotNull(mame);
+        assertFalse("MAME ignores SIGINT; stop must not wait on a soft kill", mame.supportsSoftKill());
+        EmulatorProvider vice = EmulatorProvider.findById(ViceEmulatorProvider.ID);
+        assertNotNull(vice);
+        assertTrue(vice.supportsSoftKill());
+    }
+
+    public void testTargetSystemNarrowsEmulators() {
+        List<String> forNes = EmulatorProvider.forSystem(Ca65TargetSystem.NES)
+                .stream().map(EmulatorProvider::getId).toList();
+        assertEquals(List.of(MameEmulatorProvider.ID), forNes);
+        List<String> forC64 = EmulatorProvider.forSystem(Ca65TargetSystem.C64)
+                .stream().map(EmulatorProvider::getId).toList();
+        assertEquals(List.of(ViceEmulatorProvider.ID), forC64);
+    }
+
     public void testCloneDoesNotShareBuildSpec() {
         Ca65RunConfiguration configuration = newC64Configuration();
         Ca65RunConfiguration clone = (Ca65RunConfiguration) configuration.clone();

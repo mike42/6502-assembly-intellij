@@ -4,9 +4,11 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.ca65.buildcfg.Ca65TargetSystem;
+import org.ca65.debugger.backend.DebuggerBackend;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +38,17 @@ public interface EmulatorProvider {
      */
     @NotNull String getDefaultExecutable(@NotNull Ca65TargetSystem system);
 
+    /**
+     * Whether the emulator exits on the gentle interrupt the IDE's stop
+     * button tries first (SIGINT on Unix). When false, stopping skips
+     * that step and terminates the process directly — otherwise the stop
+     * button hangs in its "force stop" state waiting for an exit that
+     * never comes, and rerun stalls with it.
+     */
+    default boolean supportsSoftKill() {
+        return true;
+    }
+
     @NotNull GeneralCommandLine createCommandLine(@NotNull EmulatorLaunchRequest request) throws ExecutionException;
 
     /**
@@ -47,6 +60,18 @@ public interface EmulatorProvider {
     default @NotNull GeneralCommandLine createDebugCommandLine(@NotNull EmulatorLaunchRequest request,
                                                                int debugPort) throws ExecutionException {
         throw new ExecutionException(getDisplayName() + " does not support debugging");
+    }
+
+    /**
+     * Connects to the emulator started by {@link #createDebugCommandLine},
+     * retrying until {@code timeoutMillis} while it boots. Only called when
+     * {@link #supportsDebugging} returned true; launch-only emulators never
+     * override this.
+     */
+    default @NotNull DebuggerBackend connectDebugger(@NotNull EmulatorLaunchRequest request, int debugPort,
+                                                     @NotNull DebuggerBackend.Listener listener,
+                                                     long timeoutMillis) throws IOException {
+        throw new IOException(getDisplayName() + " does not support debugging");
     }
 
     @NotNull

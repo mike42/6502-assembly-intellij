@@ -116,7 +116,6 @@ public class Ca65RunConfigurationEditor extends SettingsEditor<Ca65RunConfigurat
     private void updateTargetDependentFields() {
         Object target = myTargetCombo.getSelectedItem();
         boolean custom = target == CUSTOM_TARGET;
-        myCustomConfigField.setEnabled(custom);
         if (myCustomConfigField.getTextField() instanceof JBTextField field) {
             if (custom) {
                 field.getEmptyText().setText(Asm6502Bundle.message("SETTINGS.build.customcfg.hint.custom"));

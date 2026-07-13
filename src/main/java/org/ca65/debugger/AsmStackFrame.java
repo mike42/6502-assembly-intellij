@@ -13,6 +13,7 @@ import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import org.ca65.Asm6502Bundle;
 import org.ca65.dbginfo.DbgInfo;
+import org.ca65.debugger.backend.Mos6502Registers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ import java.util.TreeMap;
  */
 public class AsmStackFrame extends XStackFrame {
     /** CPU registers shown top-level, in this order; the rest is machine state. */
-    private static final List<String> PRIMARY_REGISTERS = List.of("A", "X", "Y", "SP", "PC", "FL");
+    private static final List<String> PRIMARY_REGISTERS = Mos6502Registers.PRIMARY;
     /** Segment display order: mutable data first, code/read-only last. */
     private static final List<String> SEGMENT_ORDER =
             List.of("ZEROPAGE", "BSS", "DATA", "CODE", "RODATA");
